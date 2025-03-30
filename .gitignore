@@ -3,7 +3,7 @@ Downloads/
 AppData/
 .vscode/
 
-# 무시할 확장자
+# 무시할 확장자 (용량 큰 실행파일 등)
 *.exe
 *.zip
 *.tar.gz
@@ -11,3 +11,6 @@ AppData/
 
 # 로그 등
 *.log
+
+# 서비스 계정 키
+vertical-hook-*.json
