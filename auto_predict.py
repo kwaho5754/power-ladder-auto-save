@@ -11,7 +11,7 @@ url = "https://ntry.com/data/json/games/power_ladder/recent_result.json"
 try:
     response = requests.get(url)
     data = response.json()
-    round_number = data[0]["round"]  # ✅ 리스트 첫 번째 요소의 딕셔너리에서 접근
+    round_number = data[0]["date_round"] # ✅ 리스트 첫 번째 요소의 딕셔너리에서 접근
     print(f"✅ 현재 회차: {round_number}")
 except Exception as e:
     print(f"❌ 오류: 실시간 데이터 불러오기 실패 - {e}")
