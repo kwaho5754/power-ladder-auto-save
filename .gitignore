@@ -1,0 +1,13 @@
+# 무시할 폴더들
+Downloads/
+AppData/
+.vscode/
+
+# 무시할 확장자
+*.exe
+*.zip
+*.tar.gz
+*.iso
+
+# 로그 등
+*.log

@@ -1,0 +1,7 @@
+services:
+  - type: cron
+    name: auto-save
+    schedule: "*/5 * * * *"  # 5분마다 실행
+    runtime: python
+    buildCommand: ""
+    startCommand: "python auto_save.py"
