@@ -1,0 +1,2 @@
+# auto_predict.py
+print("✅ Render 자동 실행 테스트 성공!")
