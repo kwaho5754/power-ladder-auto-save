@@ -25,35 +25,36 @@ for r in existing_rounds_raw:
     except:
         continue
 
-# === 24시간 전 계산 ===
+# === 24시간 전 기준 시간 계산 ===
 now = datetime.now(pytz.timezone("Asia/Seoul"))
 yesterday = now - timedelta(days=1)
 
-# === 결과 불러오기 ===
+# === 실시간 결과 불러오기 ===
 url = "https://ntry.com/data/json/games/power_ladder/result.json"
 response = requests.get(url)
 data = response.json()
 
-# === 필터링 및 저장 ===
+# === 리스트 기반으로 접근 ===
 new_rows = []
-
 for item in data:
     try:
-        reg_time = datetime.strptime(item['reg_date'], '%Y-%m-%d %H:%M:%S')
-        round_num = int(item['date_round'])
+        # 리스트 형태라면 이렇게 접근
+        reg_date_str = item[0]
+        round_num = int(item[1])
 
+        reg_time = datetime.strptime(reg_date_str, "%Y-%m-%d %H:%M:%S")
         if reg_time >= yesterday and round_num not in existing_rounds:
             new_rows.append([
-                item['reg_date'],
+                reg_date_str,
                 round_num,
-                item['start_point'],
-                int(item['line_count']),
-                item['odd_even']
+                item[2],               # start_point
+                int(item[3]),          # line_count
+                item[4]                # odd_even
             ])
     except Exception as e:
         print(f"⚠️ 필터링 중 오류 발생: {e}")
 
-# === 시트에 추가 ===
+# === 저장 ===
 if new_rows:
     worksheet.append_rows(new_rows, value_input_option="USER_ENTERED")
     print(f"✅ 저장된 회차: {[row[1] for row in new_rows]}")
