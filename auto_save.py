@@ -13,17 +13,22 @@ credentials = ServiceAccountCredentials.from_json_keyfile_dict(json_content, sco
 gc = gspread.authorize(credentials)
 
 # === 시트 열기 ===
-spreadsheet = gc.open("실시간결과")  # 정확한 이름
-worksheet = spreadsheet.worksheet("예측결과")
+spreadsheet = gc.open("실시간결과")  # 스프레드시트 이름
+worksheet = spreadsheet.worksheet("예측결과")  # 시트 이름
 
 # === 시트에 저장된 기존 회차 목록 불러오기 ===
-existing_rounds = worksheet.col_values(2)[1:]  # 헤더 제외
-existing_rounds = list(map(int, existing_rounds))
+existing_rounds_raw = worksheet.col_values(2)[1:]  # B열: 회차, 헤더 제외
+existing_rounds = []
+for r in existing_rounds_raw:
+    try:
+        existing_rounds.append(int(r))
+    except ValueError:
+        continue  # 숫자가 아닌 항목은 제외
 
 # === 현재 시간 기준 24시간 전 계산 ===
 now = datetime.now(pytz.timezone("Asia/Seoul"))
 yesterday = now - timedelta(days=1)
-yesterday_str = yesterday.strftime('%Y-%m-%d')
+yesterday_str = yesterday.strftime('%Y-%m-%d %H:%M:%S')
 
 # === 실시간 결과 JSON 불러오기 ===
 url = "https://ntry.com/data/json/games/power_ladder/result.json"
@@ -33,14 +38,20 @@ data = response.json()
 # === 24시간 내 결과만 필터링 ===
 new_rows = []
 for item in data:
-    if item['reg_date'] >= yesterday_str and int(item['date_round']) not in existing_rounds:
-        new_rows.append([
-            item['reg_date'],
-            int(item['date_round']),
-            item['start_point'],
-            int(item['line_count']),
-            item['odd_even']
-        ])
+    try:
+        reg_time = datetime.strptime(item['reg_date'], '%Y-%m-%d %H:%M:%S')
+        round_num = int(item['date_round'])
+
+        if reg_time >= yesterday and round_num not in existing_rounds:
+            new_rows.append([
+                item['reg_date'],
+                round_num,
+                item['start_point'],
+                int(item['line_count']),
+                item['odd_even']
+            ])
+    except Exception as e:
+        print(f"⚠️ 필터링 중 오류 발생: {e}")
 
 # === 결과 저장 ===
 if new_rows:
