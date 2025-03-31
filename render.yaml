@@ -1,7 +1,7 @@
 services:
-  - type: cron
-    name: auto-save
-    schedule: "*/5 * * * *"  # 5분마다 실행
-    runtime: python
-    buildCommand: ""
-    startCommand: "python auto_save.py"
+  - type: web
+    name: powerladder-api
+    env: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn app:app"
+    plan: free
