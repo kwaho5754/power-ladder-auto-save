@@ -1,31 +1,54 @@
 import requests
 import gspread
-from google.oauth2.service_account import Credentials
+import json
+import os
+from oauth2client.service_account import ServiceAccountCredentials
+from datetime import datetime
 
-# 구글 인증 정보
-SERVICE_ACCOUNT_FILE = 'sheet-access.json'
-SPREADSHEET_ID = '1HXRIbAOEotWONqG3FVT9iub9oWNANs7orkUKjmpqfn4'
-WORKSHEET_NAME = '시트1'
+# ✅ 실시간 회차 데이터 URL
+url = "https://ntry.com/data/json/games/power_ladder/recent_result.json"
 
-# 구글 시트 인증
-scopes = ['https://www.googleapis.com/auth/spreadsheets']
-credentials = Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=scopes)
-gc = gspread.authorize(credentials)
-worksheet = gc.open_by_key(SPREADSHEET_ID).worksheet(WORKSHEET_NAME)
+try:
+    response = requests.get(url)
+    data = response.json()
+    latest = data[-1]  # 리스트의 마지막 항목이 최신 회차
 
-# 실시간 데이터 가져오기
-url = 'https://ntry.com/data/json/games/power_ladder/recent_result.json'
-response = requests.get(url)
-data = response.json()[0]  # 최신 회차 1개
+    round_number = latest["date_round"]
+    reg_date = latest["reg_date"]
+    start_point = latest["start_point"]
+    line_count = latest["line_count"]
+    odd_even = latest["odd_even"]
 
-# 필요한 값 추출
-reg_date = data["reg_date"]
-round_num = data["date_round"]
-start = data["start_point"]
-line = data["line_count"]
-odd_even = data["odd_even"]
+    print(f"🟢 수집 성공: {round_number}회차")
 
-# 시트에 추가
-new_row = [reg_date, round_num, start, line, odd_even]
-worksheet.append_row(new_row)
-print("✅ 저장 완료:", new_row)
+except Exception as e:
+    print(f"🔴 데이터 수집 실패: {e}")
+    exit()
+
+# ✅ 구글 시트 인증 처리
+try:
+    json_str = os.environ.get("GOOGLE_SHEET_JSON")
+    json_dict = json.loads(json_str)
+
+    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+    credentials = ServiceAccountCredentials.from_json_keyfile_dict(json_dict, scope)
+    gc = gspread.authorize(credentials)
+
+    # ✅ 시트 열기
+    sh = gc.open_by_key("1HXRIbAOEotWONqG3FVT9iub9oWNANs7orkUKjmpqfn4")
+    worksheet = sh.worksheet("예측결과")
+
+    # ✅ 데이터 추가
+    worksheet.append_row([
+        reg_date,
+        str(round_number),
+        start_point,
+        line_count,
+        odd_even,
+        "", "", "", ""  # 예측 결과(1~3위)는 비워둠
+    ])
+
+    print(f"✅ Google Sheets 저장 완료: {round_number}회차")
+
+except Exception as e:
+    print(f"🔴 시트 저장 실패: {e}")
