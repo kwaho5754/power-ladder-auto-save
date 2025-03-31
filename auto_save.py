@@ -1,53 +1,49 @@
 import requests
-import gspread
 import json
+from datetime import datetime
+import gspread
 from oauth2client.service_account import ServiceAccountCredentials
-from datetime import datetime, timedelta
-import pytz
 import os
 
-# === 구글 시트 인증 ===
+# ✅ [1] 현재 시간 출력
+now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+print(f"[🟢 Now] - 실시간 결과 저장 중... ({now})")
+
+# ✅ [2] 구글 시트 인증 처리
+json_str = os.environ.get('GOOGLE_SHEET_JSON')
+info = json.loads(json_str)
+
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-json_content = json.loads(os.getenv("GOOGLE_SHEET_JSON"))
-credentials = ServiceAccountCredentials.from_json_keyfile_dict(json_content, scope)
+credentials = ServiceAccountCredentials.from_json_keyfile_dict(info, scope)
 gc = gspread.authorize(credentials)
 
-# === 시트 열기 ===
-spreadsheet = gc.open("실시간결과")
-worksheet = spreadsheet.worksheet("예측결과")
+# ✅ [3] 시트 열기 및 현재 저장된 마지막 회차 확인
+spreadsheet = gc.open("실시간결과")   # 📌 시트 제목 정확히 입력
+worksheet = spreadsheet.sheet1
+existing_data = worksheet.get_all_values()
+existing_rounds = [int(row[1]) for row in existing_data[1:] if row[1].isdigit()]
+last_saved_round = max(existing_rounds) if existing_rounds else 0
 
-# === 기존 회차 목록 불러오기 ===
-existing_rounds = worksheet.col_values(2)[1:]  # 2번째 열 = 회차
-existing_rounds = list(map(int, existing_rounds)) if existing_rounds else []
-
-# === 24시간 전 기준 시간 계산 ===
-now = datetime.now(pytz.timezone("Asia/Seoul"))
-yesterday = now - timedelta(days=1)
-
-# === 실시간 데이터 불러오기 ===
-url = "https://ntry.com/data/json/games/power_ladder/result.json"
+# ✅ [4] 실시간 결과 2개 가져오기
+url = "https://ntry.com/data/json/games/power_ladder/recent_result.json"
 response = requests.get(url)
 data = response.json()
 
-# === 필터링 및 저장할 행 만들기 ===
+# ✅ [5] 회차 순으로 정렬하여 새로운 회차만 저장
 new_rows = []
-for item in data:
-    try:
-        item_date = datetime.strptime(item['reg_date'], '%Y-%m-%d %H:%M:%S')
-        if item_date >= yesterday and int(item['date_round']) not in existing_rounds:
-            new_rows.append([
-                item['reg_date'],
-                int(item['date_round']),
-                item['start_point'],
-                int(item['line_count']),
-                item['odd_even']
-            ])
-    except Exception as e:
-        print(f"⚠ 필터링 중 오류 발생: {e}")
+for item in sorted(data, key=lambda x: x["date_round"]):
+    round_number = int(item["date_round"])
+    if round_number > last_saved_round:
+        reg_date = item["reg_date"]
+        start_point = item["start_point"]
+        line_count = item["line_count"]
+        odd_even = item["odd_even"]
+        new_rows.append([reg_date, round_number, start_point, line_count, odd_even])
 
-# === 시트에 저장 ===
+# ✅ [6] 시트에 저장
 if new_rows:
-    worksheet.append_rows(new_rows, value_input_option="USER_ENTERED")
-    print(f"✅ 저장된 회차: {[row[1] for row in new_rows]}")
+    worksheet.append_rows(new_rows)
+    for row in new_rows:
+        print(f"[✅ 수집 완료] {row[0]} - {row[1]}회차")
 else:
-    print("⚠ 저장할 신규 회차 없음")
+    print(f"[⚠️ 이미 저장됨] {last_saved_round}회차")
