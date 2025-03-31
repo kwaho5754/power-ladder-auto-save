@@ -16,8 +16,8 @@ gc = gspread.authorize(credentials)
 spreadsheet = gc.open("실시간결과")
 worksheet = spreadsheet.worksheet("예측결과")
 
-# === 기존 회차 목록 불러오기 (B열)
-existing_rounds_raw = worksheet.col_values(2)[1:]  # 헤더 제외
+# === 기존 회차 목록 불러오기 ===
+existing_rounds_raw = worksheet.col_values(2)[1:]
 existing_rounds = []
 for r in existing_rounds_raw:
     try:
@@ -25,35 +25,35 @@ for r in existing_rounds_raw:
     except:
         continue
 
-# === 24시간 전 시각 계산 ===
+# === 24시간 전 계산 ===
 now = datetime.now(pytz.timezone("Asia/Seoul"))
 yesterday = now - timedelta(days=1)
 
-# === 실시간 결과 불러오기 ===
+# === 결과 불러오기 ===
 url = "https://ntry.com/data/json/games/power_ladder/result.json"
 response = requests.get(url)
 data = response.json()
 
-# === 결과 필터링 및 저장 ===
+# === 필터링 및 저장 ===
 new_rows = []
 
 for item in data:
     try:
-        reg_time = datetime.strptime(item[0], '%Y-%m-%d %H:%M:%S')
-        round_num = int(item[1])
+        reg_time = datetime.strptime(item['reg_date'], '%Y-%m-%d %H:%M:%S')
+        round_num = int(item['date_round'])
 
         if reg_time >= yesterday and round_num not in existing_rounds:
             new_rows.append([
-                item[0],  # reg_date
+                item['reg_date'],
                 round_num,
-                item[2],  # start_point
-                int(item[3]),  # line_count
-                item[4]   # odd_even
+                item['start_point'],
+                int(item['line_count']),
+                item['odd_even']
             ])
     except Exception as e:
         print(f"⚠️ 필터링 중 오류 발생: {e}")
 
-# === 시트에 저장 ===
+# === 시트에 추가 ===
 if new_rows:
     worksheet.append_rows(new_rows, value_input_option="USER_ENTERED")
     print(f"✅ 저장된 회차: {[row[1] for row in new_rows]}")
