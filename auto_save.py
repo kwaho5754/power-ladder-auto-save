@@ -13,57 +13,51 @@ credentials = ServiceAccountCredentials.from_json_keyfile_dict(json_content, sco
 gc = gspread.authorize(credentials)
 
 # === 시트 열기 ===
-spreadsheet = gc.open("실시간결과")
-worksheet = spreadsheet.worksheet("예측결과")
+spreadsheet = gc.open("실시간결과")  # 구글 시트 문서명
+worksheet = spreadsheet.worksheet("예측결과")  # 시트 이름
 
-# === 기존 회차 목록 불러오기 ===
-existing_rounds_raw = worksheet.col_values(2)[1:]
-existing_rounds = []
-for r in existing_rounds_raw:
-    try:
-        existing_rounds.append(int(r))
-    except:
-        continue
+# === 시트에 저장된 기존 회차 목록 불러오기 ===
+existing_rounds = worksheet.col_values(2)[1:]  # B열 회차 (헤더 제외)
+existing_rounds = list(map(int, existing_rounds)) if existing_rounds else []
 
-# === 24시간 전 기준 시간 계산 ===
+# === 현재 시간 기준 24시간 전 계산 ===
 now = datetime.now(pytz.timezone("Asia/Seoul"))
 yesterday = now - timedelta(days=1)
+yesterday_str = yesterday.strftime('%Y-%m-%d')
 
-# === 실시간 결과 불러오기 ===
+# === 실시간 결과 JSON 불러오기 ===
 url = "https://ntry.com/data/json/games/power_ladder/result.json"
 response = requests.get(url)
 data = response.json()
 
-# === 필터링 ===
+# === 날짜만 비교하는 함수 ===
+def get_date_only(date_str):
+    try:
+        dt = datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S")
+        return dt.strftime('%Y-%m-%d')
+    except:
+        return ""
+
+# === 24시간 내 + 시트에 없는 회차만 필터링 ===
 new_rows = []
 for item in data:
     try:
-        # 항목 길이 확인 (최소 5개여야 함)
-        if len(item) < 5:
-            continue
+        reg_date = item['reg_date']
+        date_only = get_date_only(reg_date)
+        round_num = int(item['date_round'])
 
-        reg_date_str = item[0]
-        round_str = item[1]
-
-        # 회차가 숫자인지 확인
-        if not round_str.isdigit():
-            continue
-
-        round_num = int(round_str)
-        reg_time = datetime.strptime(reg_date_str, "%Y-%m-%d %H:%M:%S")
-
-        if reg_time >= yesterday and round_num not in existing_rounds:
+        if date_only >= yesterday_str and round_num not in existing_rounds:
             new_rows.append([
-                reg_date_str,
+                reg_date,
                 round_num,
-                item[2],               # start_point
-                int(item[3]),          # line_count
-                item[4]                # odd_even
+                item['start_point'],
+                int(item['line_count']),
+                item['odd_even']
             ])
     except Exception as e:
         print(f"⚠️ 필터링 중 오류 발생: {e}")
 
-# === 저장 ===
+# === 시트에 결과 저장 ===
 if new_rows:
     worksheet.append_rows(new_rows, value_input_option="USER_ENTERED")
     print(f"✅ 저장된 회차: {[row[1] for row in new_rows]}")
