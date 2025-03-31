@@ -21,7 +21,7 @@ credentials = ServiceAccountCredentials.from_json_keyfile_dict(google_dict, scop
 gc = gspread.authorize(credentials)
 
 # ✅ 구글 시트 열기
-spreadsheet = gc.open("예측결과")  # 시트 이름 확인
+spreadsheet = gc.open("실시간결과")  # 시트 이름 확인
 worksheet = spreadsheet.worksheet("예측결과")  # 시트 탭 이름도 동일하게 설정해야 함
 
 # ✅ 실시간 결과 가져오기
