@@ -13,29 +13,32 @@ credentials = ServiceAccountCredentials.from_json_keyfile_dict(json_content, sco
 gc = gspread.authorize(credentials)
 
 # === 시트 열기 ===
-spreadsheet = gc.open("실시간결과")  # 스프레드시트 이름
-worksheet = spreadsheet.worksheet("예측결과")  # 시트 이름
+spreadsheet = gc.open("실시간결과")
+worksheet = spreadsheet.worksheet("예측결과")
 
-# === 시트에 저장된 기존 회차 목록 불러오기 ===
-existing_rounds_raw = worksheet.col_values(2)[1:]  # B열: 회차, 헤더 제외
+# === 기존 저장 회차 목록 불러오기 ===
+existing_rounds_raw = worksheet.col_values(2)[1:]  # B열
 existing_rounds = []
 for r in existing_rounds_raw:
     try:
         existing_rounds.append(int(r))
     except ValueError:
-        continue  # 숫자가 아닌 항목은 제외
+        continue
 
-# === 현재 시간 기준 24시간 전 계산 ===
+# === 24시간 전 계산 ===
 now = datetime.now(pytz.timezone("Asia/Seoul"))
 yesterday = now - timedelta(days=1)
-yesterday_str = yesterday.strftime('%Y-%m-%d %H:%M:%S')
 
-# === 실시간 결과 JSON 불러오기 ===
+# === 실시간 결과 불러오기 ===
 url = "https://ntry.com/data/json/games/power_ladder/result.json"
 response = requests.get(url)
 data = response.json()
 
-# === 24시간 내 결과만 필터링 ===
+# ✅ 내부 result 키가 있는지 확인
+if isinstance(data, dict) and "result" in data:
+    data = data["result"]
+
+# === 24시간 내 필터링 및 저장할 데이터 ===
 new_rows = []
 for item in data:
     try:
@@ -53,7 +56,7 @@ for item in data:
     except Exception as e:
         print(f"⚠️ 필터링 중 오류 발생: {e}")
 
-# === 결과 저장 ===
+# === 시트에 저장 ===
 if new_rows:
     worksheet.append_rows(new_rows, value_input_option="USER_ENTERED")
     print(f"✅ 저장된 회차: {[row[1] for row in new_rows]}")
