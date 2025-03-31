@@ -34,15 +34,24 @@ url = "https://ntry.com/data/json/games/power_ladder/result.json"
 response = requests.get(url)
 data = response.json()
 
-# === 리스트 기반으로 접근 ===
+# === 필터링 ===
 new_rows = []
 for item in data:
     try:
-        # 리스트 형태라면 이렇게 접근
-        reg_date_str = item[0]
-        round_num = int(item[1])
+        # 항목 길이 확인 (최소 5개여야 함)
+        if len(item) < 5:
+            continue
 
+        reg_date_str = item[0]
+        round_str = item[1]
+
+        # 회차가 숫자인지 확인
+        if not round_str.isdigit():
+            continue
+
+        round_num = int(round_str)
         reg_time = datetime.strptime(reg_date_str, "%Y-%m-%d %H:%M:%S")
+
         if reg_time >= yesterday and round_num not in existing_rounds:
             new_rows.append([
                 reg_date_str,
