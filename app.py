@@ -5,7 +5,6 @@ from collections import Counter
 
 app = Flask(__name__)
 
-# 예측 조합 추출 함수
 def extract_combination(item):
     start = str(item["start_point"]).lower()
     line = int(item["line_count"])
@@ -25,13 +24,11 @@ def extract_combination(item):
 @app.route("/run-predict")
 def run_predict():
     try:
-        # 실시간 데이터 가져오기
         url = "https://ntry.com/data/json/games/power_ladder/recent_result.json"
         response = requests.get(url)
         data = response.json()
         now = datetime.now()
 
-        # 조합 분석
         reverse_map = {
             "좌삼짝": "우삼홀",
             "우삼홀": "좌삼짝",
