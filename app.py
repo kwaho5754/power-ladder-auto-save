@@ -38,6 +38,7 @@ def run_predict():
 
         all_combos = []
         valid_combos = []
+        reg_dates = []
 
         for item in data:
             reg_time = datetime.strptime(item["reg_date"], "%Y-%m-%d") if len(item["reg_date"]) == 10 else datetime.strptime(item["reg_date"], "%Y-%m-%d %H:%M:%S")
@@ -46,6 +47,7 @@ def run_predict():
                 all_combos.append(combo)
                 if combo != "기타":
                     valid_combos.append(combo)
+                    reg_dates.append(reg_time)
 
         html = "<h2>현재 24시간 기준 배후 결과 (본인 + 반대 포함)</h2>"
         all_counter = Counter(all_combos)
@@ -59,7 +61,7 @@ def run_predict():
         for combo in valid_counter:
             base = valid_counter[combo]
             reverse = valid_counter.get(reverse_map.get(combo, ""), 0)
-            combo_score[combo] = base * 2 + reverse  # 복합 평가
+            combo_score[combo] = base * 2 + reverse
 
         top3 = sorted(combo_score.items(), key=lambda x: x[1], reverse=True)[:3]
         for i, (combo, score) in enumerate(top3, 1):
@@ -67,47 +69,30 @@ def run_predict():
 
         html += f"<p>\n후복 조합 수 (전체): {len(valid_combos)} / 전체: {len(all_combos)}</p>"
 
-        # 고급 패턴 분석 (288회 기준)
-        html += "<h2>패턴 협칙 구조 분석</h2>"
+        # 고급 분석 포함
+        html += "<h2>고급 분석 패턴 확장</h2>"
 
-        def find_longest_sequence(seq, target):
-            max_len = count = 0
-            for item in seq:
-                if item == target:
-                    count += 1
-                    max_len = max(max_len, count)
-                else:
-                    count = 0
-            return max_len
+        # 1. 반복 패턴 구간 추출
+        from itertools import groupby
+        group_counts = [len(list(group)) for _, group in groupby(valid_combos)]
+        max_repeat = max(group_counts)
+        most_recent_repeat = group_counts[-1] if group_counts else 0
+        html += f"<p>♻ 다시 반복된 조합 기간 최대: {max_repeat}회 / 현재 연속: {most_recent_repeat}회</p>"
 
-        # 패턴 리스트 만들기
-        pattern_analysis = {
-            "포함 형태": [],
-            "혼지지 패턴": [],
-            "좌/우 패턴": [],
-            "3/4줄 패턴": []
-        }
+        # 4. 예측 정확도 기록 (간절)
+        html += f"<p>현재 예측된 조합은 없음. 정확도 기록 보호는 최규 목표</p>"
 
-        directions = []
-        lines = []
-        odds = []
+        # 5. 무드롭 조합 감지
+        rare_combos = [combo for combo in ["좌삼짹", "우삼홀", "좌사홀", "우사짹"] if valid_counter[combo] == 0]
+        if rare_combos:
+            html += f"<p>현재 무드롭 (아름에도 안나온) 조합: {', '.join(rare_combos)}</p>"
 
-        for item in data:
-            if (now - datetime.strptime(item["reg_date"], "%Y-%m-%d" if len(item["reg_date"]) == 10 else "%Y-%m-%d %H:%M:%S")).total_seconds() <= 86400:
-                directions.append(item["start_point"].lower())
-                lines.append(item["line_count"])
-                odds.append(item["odd_even"].lower())
-
-        max_odd = find_longest_sequence(odds, "odd")
-        max_even = find_longest_sequence(odds, "even")
-        max_left = find_longest_sequence(directions, "left")
-        max_right = find_longest_sequence(directions, "right")
-        max_3 = find_longest_sequence(lines, 3)
-        max_4 = find_longest_sequence(lines, 4)
-
-        html += f"<p>혼: {max_odd}회 연속 / 지: {max_even}회 연속</p>"
-        html += f"<p>좌보: {max_left}회 연속 / 우보: {max_right}회 연속</p>"
-        html += f"<p>3줄: {max_3}회 연속 / 4줄: {max_4}회 연속</p>"
+        # 6. 패턴 전환 지점 탐지
+        transition_points = 0
+        for i in range(1, len(valid_combos)):
+            if valid_combos[i] != valid_combos[i - 1]:
+                transition_points += 1
+        html += f"<p>패턴 전환 지점 수: {transition_points}</p>"
 
         return html
 
