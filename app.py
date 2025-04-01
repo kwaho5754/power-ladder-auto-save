@@ -21,19 +21,21 @@ def extract_combination(item):
     else:
         return "기타"
 
-def analyze_patterns(combos):
+def analyze_patterns(items):
     pattern_analysis = "<h3>🧠 고급 패턴 분석</h3>"
-    if not combos:
+    if not items:
         return pattern_analysis + "<p>데이터 없음</p>"
 
-    recent_10 = combos[-10:]
+    recent_10 = items[-10:]
+
+    combo_list = [item['combo'] for item in recent_10 if item['combo'] != '기타']
     last_combo = None
     streak = 0
     longest_combo = None
     longest_streak = 0
     non_appeared = {"좌삼짝", "우삼홀", "좌사홀", "우사짝"}
 
-    for combo in recent_10:
+    for combo in combo_list:
         if combo in non_appeared:
             non_appeared.discard(combo)
         if combo == last_combo:
@@ -65,7 +67,34 @@ def analyze_patterns(combos):
         missed = ", ".join(non_appeared)
         pattern_analysis += f"<p>📉 최근 10회 동안 등장하지 않은 조합: {missed}</p>"
 
+    # 추가 분석: 홀/짝, 줄 수, 좌/우
+    odds = [item['odd_even'] for item in recent_10 if item['odd_even'] in ('홀', '짝')]
+    lines = [str(item['line_count']) for item in recent_10 if str(item['line_count']) in ('3', '4')]
+    sides = [item['start_point'] for item in recent_10 if item['start_point'] in ('왼쪽', '오른쪽')]
+
+    if odds:
+        last_odd = odds[-1]
+        odd_streak = len(list(reversed(list(takewhile(lambda x: x == last_odd, reversed(odds))))))
+        pattern_analysis += f"<p>⚖️ 최근 홀/짝: <b>{last_odd}</b> {odd_streak}회 연속</p>"
+
+    if lines:
+        last_line = lines[-1]
+        line_streak = len(list(reversed(list(takewhile(lambda x: x == last_line, reversed(lines))))))
+        pattern_analysis += f"<p>📏 최근 줄 수: <b>{last_line}</b>줄 {line_streak}회 연속</p>"
+
+    if sides:
+        last_side = sides[-1]
+        side_streak = len(list(reversed(list(takewhile(lambda x: x == last_side, reversed(sides))))))
+        pattern_analysis += f"<p>↔️ 최근 방향: <b>{last_side}</b> {side_streak}회 연속</p>"
+
     return pattern_analysis
+
+def takewhile(predicate, iterable):
+    for item in iterable:
+        if predicate(item):
+            yield item
+        else:
+            break
 
 def get_prediction_html():
     url = "https://ntry.com/data/json/games/power_ladder/recent_result.json"
@@ -121,7 +150,7 @@ def get_prediction_html():
         html += f"<p>✅ {i}위 예측: <b>{combo}</b></p>"
 
     html += f"<p>📊 유효한 조합 총 분석 개수: {len(valid_combos)} / 전체: {len(all_combos)}</p>"
-    html += analyze_patterns(valid_combos)
+    html += analyze_patterns(recent_items)
 
     return html
 
