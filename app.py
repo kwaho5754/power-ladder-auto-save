@@ -21,6 +21,52 @@ def extract_combination(item):
     else:
         return "기타"
 
+def analyze_patterns(combos):
+    pattern_analysis = "<h3>🧠 고급 패턴 분석</h3>"
+    if not combos:
+        return pattern_analysis + "<p>데이터 없음</p>"
+
+    recent_10 = combos[-10:]
+    last_combo = None
+    streak = 0
+    longest_combo = None
+    longest_streak = 0
+    non_appeared = {"좌삼짝", "우삼홀", "좌사홀", "우사짝"}
+
+    for combo in recent_10:
+        if combo in non_appeared:
+            non_appeared.discard(combo)
+        if combo == last_combo:
+            streak += 1
+        else:
+            if streak > longest_streak:
+                longest_streak = streak
+                longest_combo = last_combo
+            last_combo = combo
+            streak = 1
+
+    if streak > longest_streak:
+        longest_streak = streak
+        longest_combo = last_combo
+
+    if longest_combo:
+        pattern_analysis += f"<p>🔁 최근 10회 중 가장 반복된 조합: <b>{longest_combo}</b> ({longest_streak}회 연속)</p>"
+        if longest_streak >= 3:
+            reverse_map = {
+                "좌삼짝": "우삼홀",
+                "우삼홀": "좌삼짝",
+                "좌사홀": "우사짝",
+                "우사짝": "좌사홀"
+            }
+            expected_reverse = reverse_map.get(longest_combo, "없음")
+            pattern_analysis += f"<p>➡️ 예상 반대 조합 등장 가능성: <b>{expected_reverse}</b></p>"
+
+    if non_appeared:
+        missed = ", ".join(non_appeared)
+        pattern_analysis += f"<p>📉 최근 10회 동안 등장하지 않은 조합: {missed}</p>"
+
+    return pattern_analysis
+
 def get_prediction_html():
     url = "https://ntry.com/data/json/games/power_ladder/recent_result.json"
     response = requests.get(url)
@@ -75,6 +121,7 @@ def get_prediction_html():
         html += f"<p>✅ {i}위 예측: <b>{combo}</b></p>"
 
     html += f"<p>📊 유효한 조합 총 분석 개수: {len(valid_combos)} / 전체: {len(all_combos)}</p>"
+    html += analyze_patterns(valid_combos)
 
     return html
 
