@@ -52,7 +52,11 @@ def run_predict():
                 all_combos.append(combo)
                 if combo != "기타":
                     valid_combos.append(combo)
-                    recent_items.append(item)
+                    recent_items.append({
+                        "datetime": reg_time.strftime("%Y-%m-%d %H:%M"),
+                        "round": item["round"],
+                        "combo": combo
+                    })
 
         all_counter = Counter(all_combos)
         valid_counter = Counter(valid_combos)
@@ -76,6 +80,12 @@ def run_predict():
             html += f"<p>✅ {i}위 예측: <b>{combo}</b></p>"
 
         html += f"<p>✅ 유효 조합 개수: {len(valid_combos)}</p>"
+
+        html += "<h3>📋 최근 24시간 전체 회차 결과</h3>"
+        html += "<ul>"
+        for item in recent_items:
+            html += f"<li>{item['datetime']} / {item['round']}회차 → {item['combo']}</li>"
+        html += "</ul>"
 
         return html
 
