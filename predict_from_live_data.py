@@ -33,7 +33,12 @@ def extract_combination(item):
 # 회차 정보 추출
 recent_items = []
 for item in data:
-    reg_time = datetime.strptime(item["reg_date"], "%Y-%m-%d %H:%M:%S")
+    time_str = item["reg_date"]
+    if len(time_str) == 10:
+        reg_time = datetime.strptime(time_str, "%Y-%m-%d")
+    else:
+        reg_time = datetime.strptime(time_str, "%Y-%m-%d %H:%M:%S")
+
     if (now - reg_time).total_seconds() <= 86400:
         combo = extract_combination(item)
         item["combo"] = combo
