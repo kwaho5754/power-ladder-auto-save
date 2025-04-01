@@ -49,10 +49,10 @@ for item in data:
 
 print(f"📊 총 회차 수집됨: {len(recent_items)}개\n")
 
-# 전체 회차 출력
+# 전체 회차 출력 (날짜 + 시간 포함)
 print("📄 회차별 조합 추출 결과 (전체 표시):")
 for item in recent_items[::-1]:
-    print(f"- {item['reg_date'].split()[0]} / {item['date_round']}회차 ➔ 조합: {item['combo']}")
+    print(f"- {item['reg_date']} / {item['date_round']}회차 ➔ 조합: {item['combo']}")
 
 # 유효 조합 카운팅
 valid_counter = Counter(valid_combos)
