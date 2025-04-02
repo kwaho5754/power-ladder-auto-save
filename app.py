@@ -1,6 +1,6 @@
 from flask import Flask
 import requests
-from datetime import datetime, timedelta
+from datetime import datetime
 from collections import Counter
 
 app = Flask(__name__)
@@ -33,7 +33,7 @@ def run_predict():
             "좌삼짝": "우사홀",
             "우삼홀": "좌사짝",
             "좌사홀": "우삼홀",
-            "우사짝": "좌삼짝",
+            "우사짝": "좌삼짝"
         }
 
         all_combos = []
@@ -52,7 +52,7 @@ def run_predict():
                 all_combos.append(combo)
                 if combo != "기타":
                     valid_combos.append(combo)
-                    recent_items.append((time_str[:10], item.get("round", "??회차"), combo))
+                    recent_items.append((item.get("round", "??회차"), combo))
 
         all_counter = Counter(all_combos)
         valid_counter = Counter(valid_combos)
@@ -61,40 +61,30 @@ def run_predict():
         for combo in ["좌삼짝", "우삼홀", "좌사홀", "우사짝"]:
             valid_count = valid_counter.get(combo, 0)
             total_count = all_counter.get(combo, 0)
-            html += f"<p>🔹{combo}: {valid_count}회 (전체: {total_count}회)</p>"
+            html += f"✅ {combo}: {valid_count}회 (전체: {total_count}회)<br>"
 
-        # 흐름 기반 가중치 계산
         combo_score = {}
         for combo in valid_counter:
             base = valid_counter[combo]
             reverse = valid_counter.get(reverse_map.get(combo, ""), 0)
-            recent_20 = valid_combos[-20:].count(combo) * 2
-            recent_10 = valid_combos[-10:].count(combo) * 3
-            last_3 = valid_combos[-3:].count(combo) * 5
-
-            # 반복 조합 감점
-            penalty = 0
-            if len(valid_combos) >= 3 and valid_combos[-3:] == [combo]*3:
-                penalty = 3
-
-            combo_score[combo] = base + reverse + recent_20 + recent_10 + last_3 - penalty
+            combo_score[combo] = base + reverse
 
         top3 = sorted(combo_score.items(), key=lambda x: x[1], reverse=True)[:3]
 
         html += "<h2>🎯 예측 결과 (최근 24시간 분석 기반)</h2>"
         for i, (combo, _) in enumerate(top3, 1):
-            html += f"<p>✅ {i}위 예측: <b>{combo}</b></p>"
+            html += f"✅ {i}위 예측: <b>{combo}</b><br>"
 
         html += f"<p>✅ 유효 조합 개수: {len(valid_combos)}</p>"
 
-        html += "<hr><h3>📜 24시간 전체 결과 출력</h3>"
-        for date, round_, combo in reversed(recent_items):
-            html += f"<p>- {date} / {round_} ➜ 조합: {combo}</p>"
+        html += "<h2>📜 24시간 전체 결과 출력</h2>"
+        for round_, combo in reversed(recent_items):
+            html += f"- {round_} ➜ 조합: {combo}<br>"
 
         return html
 
     except Exception as e:
-        return f"<p>🚨 오류 발생: {e}</p>"
+        return f"<p>오류 발생: {e}</p>"
 
 if __name__ == "__main__":
     app.run(debug=True)
