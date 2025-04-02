@@ -30,9 +30,9 @@ def run_predict():
         now = datetime.now()
 
         reverse_map = {
-            "좌삼짝": "우삼홀",
-            "우삼홀": "좌사홀",
-            "좌사홀": "우사짝",
+            "좌삼짝": "우사홀",
+            "우삼홀": "좌사짝",
+            "좌사홀": "우삼홀",
             "우사짝": "좌삼짝",
         }
 
@@ -42,7 +42,7 @@ def run_predict():
 
         for item in data:
             time_str = str(item["reg_date"])
-            if len(time_str) == 10:
+            if len(time_str) <= 10:
                 reg_time = datetime.strptime(time_str, "%Y-%m-%d")
             else:
                 reg_time = datetime.strptime(time_str, "%Y-%m-%d %H:%M:%S")
@@ -52,13 +52,16 @@ def run_predict():
                 all_combos.append(combo)
                 if combo != "기타":
                     valid_combos.append(combo)
-                    recent_items.append((item.get("reg_date", "??"), item.get("round", "??회차"), combo))
+                    recent_items.append((time_str[:10], item.get("round", "??회차"), combo))
 
         all_counter = Counter(all_combos)
         valid_counter = Counter(valid_combos)
 
-        html = "<h2>🎯 시스템 배팅용 예측 (최근 24시간 기준)</h2>"
-        html += "<p>선택된 3개 조합 중 2개 이상 적중 시 성공!</p>"
+        html = "<h2>📊 최근 24시간 기준 분석 결과 (본인 + 반대 포함)</h2>"
+        for combo in ["우삼홀", "좌삼짝", "우사짝", "좌사홀"]:
+            valid_count = valid_counter.get(combo, 0)
+            total_count = all_counter.get(combo, 0)
+            html += f"<p>✅ {combo}: {valid_count}회 (전체: {total_count}회)</p>"
 
         combo_score = {}
         for combo in valid_counter:
@@ -68,14 +71,15 @@ def run_predict():
 
         top3 = sorted(combo_score.items(), key=lambda x: x[1], reverse=True)[:3]
 
-        for combo, score in top3:
-            html += f"<p>✅ {combo}</p>"
+        html += "<h2>🎯 예측 결과 (최근 24시간 분석 기반)</h2>"
+        for i, (combo, _) in enumerate(top3, 1):
+            html += f"<p>✅ {i}위 예측: <b>{combo}</b></p>"
 
-        html += f"<br><p>✅ 유효한 조합 개수: {len(valid_combos)} / 전체: {len(all_combos)}</p>"
+        html += f"<p>✅ 유효한 조합 개수: {len(valid_combos)}</p>"
 
-        html += "<h2>📜 24시간 전체 결과 출력 (최신이 위에)</h2>"
+        html += "<h2>📜 24시간 전체 결과 출력</h2>"
         for reg_date, round_, combo in reversed(recent_items):
-            html += f"<p>- {reg_date} / {round_} ➜ 조합: {combo}</p>"
+            html += f"<p>- {reg_date} / {round_} → 조합: {combo}</p>"
 
         return html
 
