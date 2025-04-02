@@ -54,9 +54,6 @@ def run_predict():
                     valid_combos.append(combo)
                     recent_items.append((item.get("reg_date", "??"), item.get("round", "??회차"), combo))
 
-        # 정렬을 최근 데이터가 위로 가도록 reverse
-        recent_items = list(reversed(recent_items))
-
         all_counter = Counter(all_combos)
         valid_counter = Counter(valid_combos)
 
@@ -81,7 +78,7 @@ def run_predict():
         html += f"<p>✅ 유효한 조합 개수: {len(valid_combos)} / 전체: {len(all_combos)}</p>"
 
         html += "<h2>📜 24시간 전체 결과 출력</h2>"
-        for reg_date, round_, combo in recent_items:
+        for reg_date, round_, combo in reversed(recent_items):  # 최신 결과가 위에 나오도록 출력
             html += f"<p>- {reg_date} / {round_} ➜ 조합: {combo}</p>"
 
         return html
