@@ -30,7 +30,7 @@ def run_predict():
         now = datetime.now()
 
         reverse_map = {
-            "좌삼짝": "우사홀",
+            "좌삼짝": "우삼홀",
             "우삼홀": "좌사짝",
             "좌사홀": "우삼짝",
             "우사짝": "좌삼홀",
@@ -54,8 +54,8 @@ def run_predict():
                     valid_combos.append(combo)
                     recent_items.append((item.get("reg_date", "??"), item.get("round", "??회차"), combo))
 
-        # 최근값이 위로 오도록 정렬
-        recent_items.reverse()
+        # 정렬을 최근 데이터가 위로 가도록 reverse
+        recent_items = list(reversed(recent_items))
 
         all_counter = Counter(all_combos)
         valid_counter = Counter(valid_combos)
