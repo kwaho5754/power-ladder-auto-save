@@ -33,7 +33,7 @@ def run_predict():
             "좌삼짝": "우사홀",
             "우삼홀": "좌사짝",
             "좌사홀": "우삼짝",
-            "우사짝": "좌삼홀"
+            "우사짝": "좌삼홀",
         }
 
         all_combos = []
@@ -41,7 +41,7 @@ def run_predict():
         recent_items = []
 
         for item in data:
-            time_str = str(item.get("reg_date", ""))
+            time_str = str(item["reg_date"])
             if len(time_str) == 10:
                 reg_time = datetime.strptime(time_str, "%Y-%m-%d")
             else:
@@ -52,15 +52,18 @@ def run_predict():
                 all_combos.append(combo)
                 if combo != "기타":
                     valid_combos.append(combo)
-                    recent_items.append((item.get("reg_date", ""), item.get("round", "??회차"), combo))
+                    recent_items.append((item.get("reg_date", "??"), item.get("round", "??회차"), combo))
+
+        # 최근값이 위로 오도록 정렬
+        recent_items.reverse()
 
         all_counter = Counter(all_combos)
         valid_counter = Counter(valid_combos)
 
         html = "<h2>📊 최근 24시간 기준 분석 결과 (본인 + 반대 포함)</h2>"
         for combo in ["좌삼짝", "우삼홀", "좌사홀", "우사짝"]:
-            valid_count = valid_counter.get(combo, 0)
             total_count = all_counter.get(combo, 0)
+            valid_count = valid_counter.get(combo, 0)
             html += f"<p>✅ {combo}: {valid_count}회 (전체: {total_count}회)</p>"
 
         combo_score = {}
@@ -75,11 +78,11 @@ def run_predict():
         for i, (combo, _) in enumerate(top3, 1):
             html += f"<p>✅ {i}위 예측: <b>{combo}</b></p>"
 
-        html += f"<p>✅ 유효 조합 개수: {len(valid_combos)}</p>"
+        html += f"<p>✅ 유효한 조합 개수: {len(valid_combos)} / 전체: {len(all_combos)}</p>"
 
         html += "<h2>📜 24시간 전체 결과 출력</h2>"
-        for reg_time, round_, combo in recent_items:  # 순서 변경: 최신이 위로 오도록
-            html += f"<p>- {reg_time} / {round_} ➜ 조합: {combo}</p>"
+        for reg_date, round_, combo in recent_items:
+            html += f"<p>- {reg_date} / {round_} ➜ 조합: {combo}</p>"
 
         return html
 
