@@ -23,3 +23,4 @@ print("📊 예측 결과")
 print(f"🥇 1위: {ranking[0]}")
 print(f"🥈 2위: {ranking[1]}")
 print(f"🥉 3위: {ranking[2]}")
+
