@@ -78,7 +78,7 @@ def run_predict():
         html += f"<p>✅ 유효 조합 개수: {len(valid_combos)}</p>"
 
         html += "<h2>📜 24시간 전체 결과 출력</h2>"
-        for reg_time, round_, combo in reversed(recent_items):
+        for reg_time, round_, combo in recent_items:  # 순서 변경: 최신이 위로 오도록
             html += f"<p>- {reg_time} / {round_} ➜ 조합: {combo}</p>"
 
         return html
@@ -88,3 +88,4 @@ def run_predict():
 
 if __name__ == "__main__":
     app.run(debug=True)
+
