@@ -1,91 +1,77 @@
-from flask import Flask
+from flask import Flask, jsonify
 import requests
-from datetime import datetime
-from collections import Counter
+from datetime import datetime, timedelta
+import os
+import gspread
+import json
+from oauth2client.service_account import ServiceAccountCredentials
 
 app = Flask(__name__)
 
-def extract_combination(item):
-    start = str(item["start_point"]).lower()
-    line = int(item["line_count"])
-    odd = str(item["odd_even"]).lower()
+# Google Sheets 연동 설정
+def get_sheet():
+    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+    json_str = os.environ.get("GOOGLE_SHEET_JSON")
+    if not json_str:
+        raise Exception("환경변수 'GOOGLE_SHEET_JSON' 설정 필요")
+    info = json.loads(json_str)
+    creds = ServiceAccountCredentials.from_json_keyfile_dict(info, scope)
+    client = gspread.authorize(creds)
+    sheet = client.open_by_key("1HXRIbAOEotWONqG3FVT9iub9oWNANs7orkUKjmpqfn4").worksheet("예측결과")
+    return sheet
 
-    if start == "left" and line == 3 and odd == "even":
-        return "좌삼짝"
-    elif start == "right" and line == 3 and odd == "odd":
-        return "우삼홀"
-    elif start == "left" and line == 4 and odd == "odd":
-        return "좌사홀"
-    elif start == "right" and line == 4 and odd == "even":
-        return "우사짝"
-    else:
-        return "기타"
+# 실시간 회차 데이터 수집 API
+@app.route("/run-manual", methods=["GET"])
+def run_manual():
+    url = "https://ntry.com/data/json/games/power_ladder/recent_result.json"
+    res = requests.get(url)
+    data = res.json()
 
-@app.route("/run-manual")
-def run_predict():
+    def format_comb(result):
+        return f"{result['p_left']}{result['p_ladder']}-{result['p_right']}{result['p_odd_even']}"
+
+    def parse_time(timestr):
+        return datetime.strptime(timestr, "%Y-%m-%d %H:%M:%S")
+
+    # 최근 24시간 내 데이터 필터링
+    now = datetime.now()
+    valid_data = [d for d in data if now - parse_time(d['game_date']) <= timedelta(hours=24)]
+
+    # 시트 불러오기
     try:
-        url = "https://ntry.com/data/json/games/power_ladder/recent_result.json"
-        response = requests.get(url)
-        data = response.json()
-        now = datetime.now()
-
-        reverse_map = {
-            "좌삼짝": "우사홀",
-            "우삼홀": "좌사짝",
-            "좌사홀": "우삼짝",
-            "우사짝": "좌삼홀"
-        }
-
-        all_combos = []
-        valid_combos = []
-        recent_items = []
-
-        for item in data:
-            time_str = str(item.get("reg_date", ""))
-            if len(time_str) == 10:
-                reg_time = datetime.strptime(time_str, "%Y-%m-%d")
-            else:
-                reg_time = datetime.strptime(time_str, "%Y-%m-%d %H:%M:%S")
-
-            if (now - reg_time).total_seconds() <= 86400:
-                combo = extract_combination(item)
-                all_combos.append(combo)
-                if combo != "기타":
-                    valid_combos.append(combo)
-                    recent_items.append((item.get("reg_date", ""), item.get("round", "??회차"), combo))
-
-        all_counter = Counter(all_combos)
-        valid_counter = Counter(valid_combos)
-
-        html = "<h2>📊 최근 24시간 기준 분석 결과 (본인 + 반대 포함)</h2>"
-        for combo in ["좌삼짝", "우삼홀", "좌사홀", "우사짝"]:
-            valid_count = valid_counter.get(combo, 0)
-            total_count = all_counter.get(combo, 0)
-            html += f"<p>✅ {combo}: {valid_count}회 (전체: {total_count}회)</p>"
-
-        combo_score = {}
-        for combo in valid_counter:
-            base = valid_counter[combo]
-            reverse = valid_counter.get(reverse_map.get(combo, ""), 0)
-            combo_score[combo] = base + reverse
-
-        top3 = sorted(combo_score.items(), key=lambda x: x[1], reverse=True)[:3]
-
-        html += "<h2>🎯 예측 결과 (최근 24시간 분석 기반)</h2>"
-        for i, (combo, _) in enumerate(top3, 1):
-            html += f"<p>✅ {i}위 예측: <b>{combo}</b></p>"
-
-        html += f"<p>✅ 유효 조합 개수: {len(valid_combos)}</p>"
-
-        html += "<h2>📜 24시간 전체 결과 출력</h2>"
-        for reg_time, round_, combo in recent_items:  # 순서 변경: 최신이 위로 오도록
-            html += f"<p>- {reg_time} / {round_} ➜ 조합: {combo}</p>"
-
-        return html
-
+        sheet = get_sheet()
+        existing_rounds = set(row[1] for row in sheet.get_all_values()[1:])  # 1열: 날짜, 2열: 회차
     except Exception as e:
-        return f"<p>오류 발생: {e}</p>"
+        return jsonify({"error": str(e)})
+
+    saved = 0
+    for d in valid_data:
+        round_key = d['game_round']
+        if round_key not in existing_rounds:
+            row = [d['game_date'], round_key, format_comb(d)]
+            sheet.append_row(row)
+            saved += 1
+
+    # 분석 - 조합 빈도수 기반 예측
+    all_data = sheet.get_all_values()[1:]  # 헤더 제외
+    comb_counter = {}
+    for row in all_data:
+        comb = row[2]
+        comb_counter[comb] = comb_counter.get(comb, 0) + 1
+
+    sorted_comb = sorted(comb_counter.items(), key=lambda x: x[1], reverse=True)
+    top3 = [item[0] for item in sorted_comb[:3]]
+
+    return jsonify({
+        "총 분석 데이터 수": len(all_data),
+        "상위 3개 조합": top3,
+        "방금 저장된 회차 수": saved
+    })
+
+# 루트 주소는 확인용
+@app.route("/")
+def index():
+    return "Power Ladder Prediction API"
 
 if __name__ == "__main__":
     app.run(debug=True)
-
