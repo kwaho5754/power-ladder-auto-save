@@ -1,91 +1,69 @@
-from flask import Flask, jsonify
-from datetime import datetime, timedelta
-import requests
-import gspread
-from oauth2client.service_account import ServiceAccountCredentials
 import os
 import json
+import requests
+from datetime import datetime, timedelta
+from flask import Flask, jsonify
+import gspread
+from google.oauth2.service_account import Credentials
 
 app = Flask(__name__)
 
-# 🔐 Render용: 환경변수에서 서비스 계정 JSON 받아오기
-google_sheet_json = os.environ.get("GOOGLE_SHEET_JSON")
-with open("temp_credentials.json", "w") as f:
-    f.write(google_sheet_json)
+# 📌 구글 시트 설정
+sheet_id = "1HXRIbAOEotWONqG3FVT9iub9oWNANs7orkUKjmpqfn4"
+sheet_name = "예측결과"
 
-scope = [
-    'https://spreadsheets.google.com/feeds',
-    'https://www.googleapis.com/auth/drive'
-]
-creds = ServiceAccountCredentials.from_json_keyfile_name('temp_credentials.json', scope)
-gs = gspread.authorize(creds)
+# 📌 서비스 계정 환경 변수에서 JSON 불러오기
+json_data = os.environ.get("GOOGLE_SHEET_JSON")
+if json_data is None:
+    raise ValueError("환경 변수 'GOOGLE_SHEET_JSON'이 설정되지 않았습니다.")
 
-# 📗 시트 정보 설정
-SPREADSHEET_KEY = '1HXRIbAOEotWONqG3FVT9iub9oWNANs7orkUKjmpqfn4'
-worksheet = gs.open_by_key(SPREADSHEET_KEY).worksheet('예측결과')
+info = json.loads(json_data)
+scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+creds = Credentials.from_service_account_info(info, scopes=scope)
+client = gspread.authorize(creds)
 
-# 🧠 현재 회차 계산 함수
-def get_current_round():
-    now = datetime.now()
-    start_time = now.replace(hour=0, minute=0, second=0, microsecond=0)
-    minutes_passed = int((now - start_time).total_seconds() // 60)
-    round_number = minutes_passed // 5 + 1
-    return round_number
+# 📌 현재 회차 정보 가져오기 (ntry JSON)
+def get_latest_round_info():
+    url = "https://ntry.com/data/json/games/power_ladder/recent_result.json"
+    res = requests.get(url)
+    if res.status_code != 200:
+        raise ValueError("❌ 회차 데이터를 가져올 수 없습니다.")
+    data = res.json()
+    return {
+        "round": data[0]['round'],
+        "time": data[0]['time']
+    }
 
-# 🔍 실시간 JSON 결과 가져오기 (최근 회차 데이터)
-def fetch_latest_result():
-    url = 'https://ntry.com/data/json/games/power_ladder/recent_result.json'
+# ✅ 수동 실행 API → 실시간 회차 저장
+@app.route("/run-manual", methods=["GET"])
+def run_manual():
     try:
-        res = requests.get(url)
-        res.raise_for_status()
-        data = res.json()
-        return {
-            'round': data['round'],
-            'left_right': data['left_right'],
-            'odd_even': data['odd_even'],
-            'start_position': data['start_position'],
-            'ladder_count': data['ladder_count'],
-            'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        }
+        sheet = client.open_by_key(sheet_id).worksheet(sheet_name)
+        existing_data = sheet.get_all_records()
+
+        # ⏰ 현재 회차
+        latest = get_latest_round_info()
+        current_round = latest['round']
+        current_time = latest['time']
+
+        # ✅ 중복 방지
+        existing_rounds = [str(row.get('round')) for row in existing_data]
+        if str(current_round) in existing_rounds:
+            return jsonify({"message": "이미 처리된 회차입니다."})
+
+        # ✅ 시트에 저장 (빈 항목 포함)
+        sheet.append_row([
+            current_round,
+            current_time,
+            "", "", "", "", "", "", "", "", "", "", ""
+        ])
+
+        return jsonify({"message": "신규 회차 저장 완료"})
+
     except Exception as e:
         print(f"❌ 실시간 데이터 수집 오류: {e}")
-        return None
+        return jsonify({"message": f"실패: {e}"})
 
-# ✅ 중복 저장 방지용: 시트에 이미 저장된 회차 불러오기
-def get_saved_rounds():
-    try:
-        rounds = worksheet.col_values(1)[1:]  # 헤더 제외
-        return [int(r) for r in rounds if r.isdigit()]
-    except:
-        return []
 
-# 🔄 누적 저장 기능 (중복 회차 제외)
-def append_new_result():
-    latest = fetch_latest_result()
-    if not latest:
-        return '데이터 수집 실패'
-
-    saved = get_saved_rounds()
-    if int(latest['round']) in saved:
-        return f"✅ 이미 저장된 회차입니다: {latest['round']}"
-
-    row = [
-        latest['round'], latest['left_right'], latest['odd_even'],
-        latest['start_position'], latest['ladder_count'], latest['timestamp']
-    ]
-    worksheet.append_row(row)
-    return f"🟢 저장 완료 - 회차: {latest['round']}"
-
-# 📡 수동 실행용 엔드포인트
-@app.route('/run-manual')
-def run_manual():
-    result = append_new_result()
-    return jsonify({'message': result})
-
-# ✅ 루트 확인
-@app.route('/')
-def home():
-    return "✅ Power Ladder Auto Save Running"
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run(debug=True)
