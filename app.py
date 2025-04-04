@@ -1,77 +1,66 @@
 from flask import Flask, jsonify
-import requests
 from datetime import datetime, timedelta
-import os
+import requests
 import gspread
-import json
 from oauth2client.service_account import ServiceAccountCredentials
 
 app = Flask(__name__)
 
-# Google Sheets 연동 설정
-def get_sheet():
-    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    json_str = os.environ.get("GOOGLE_SHEET_JSON")
-    if not json_str:
-        raise Exception("환경변수 'GOOGLE_SHEET_JSON' 설정 필요")
-    info = json.loads(json_str)
-    creds = ServiceAccountCredentials.from_json_keyfile_dict(info, scope)
-    client = gspread.authorize(creds)
-    sheet = client.open_by_key("1HXRIbAOEotWONqG3FVT9iub9oWNANs7orkUKjmpqfn4").worksheet("예측결과")
-    return sheet
+# 구글 시트 설정
+scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
+creds = ServiceAccountCredentials.from_json_keyfile_name('google_sheet_credentials.json', scope)
+client = gspread.authorize(creds)
+sheet = client.open_by_key('1HXRIbAOEotWONqG3FVT9iub9oWNANs7orkUKjmpqfn4').worksheet('예측결과')
 
-# 실시간 회차 데이터 수집 API
-@app.route("/run-manual", methods=["GET"])
-def run_manual():
-    url = "https://ntry.com/data/json/games/power_ladder/recent_result.json"
-    res = requests.get(url)
-    data = res.json()
-
-    def format_comb(result):
-        return f"{result['p_left']}{result['p_ladder']}-{result['p_right']}{result['p_odd_even']}"
-
-    def parse_time(timestr):
-        return datetime.strptime(timestr, "%Y-%m-%d %H:%M:%S")
-
-    # 최근 24시간 내 데이터 필터링
+def get_current_round():
     now = datetime.now()
-    valid_data = [d for d in data if now - parse_time(d['game_date']) <= timedelta(hours=24)]
+    return now.hour * 12 + now.minute // 5 + 1
 
-    # 시트 불러오기
+def get_today_date():
+    return datetime.now().strftime('%Y-%m-%d')
+
+def get_existing_rounds():
+    records = sheet.get_all_records()
+    return {(r['game_date'], int(r['round'])) for r in records if 'game_date' in r and 'round' in r}
+
+def fetch_current_result():
     try:
-        sheet = get_sheet()
-        existing_rounds = set(row[1] for row in sheet.get_all_values()[1:])  # 1열: 날짜, 2열: 회차
+        res = requests.get("https://ntry.com/data/json/games/power_ladder/recent_result.json")
+        data = res.json()
+        return {
+            'game_date': get_today_date(),
+            'round': int(data['round']),
+            'result': data['result']  # 추가 필드
+        }
     except Exception as e:
-        return jsonify({"error": str(e)})
+        print("🔴 데이터 가져오기 실패:", e)
+        return None
 
-    saved = 0
-    for d in valid_data:
-        round_key = d['game_round']
-        if round_key not in existing_rounds:
-            row = [d['game_date'], round_key, format_comb(d)]
-            sheet.append_row(row)
-            saved += 1
+def save_to_sheet(entry):
+    try:
+        sheet.append_row([entry['game_date'], entry['round'], entry['result']])
+        print(f"✅ 저장 완료: {entry['game_date']} {entry['round']}회차")
+    except Exception as e:
+        print("❌ 저장 실패:", e)
 
-    # 분석 - 조합 빈도수 기반 예측
-    all_data = sheet.get_all_values()[1:]  # 헤더 제외
-    comb_counter = {}
-    for row in all_data:
-        comb = row[2]
-        comb_counter[comb] = comb_counter.get(comb, 0) + 1
-
-    sorted_comb = sorted(comb_counter.items(), key=lambda x: x[1], reverse=True)
-    top3 = [item[0] for item in sorted_comb[:3]]
-
-    return jsonify({
-        "총 분석 데이터 수": len(all_data),
-        "상위 3개 조합": top3,
-        "방금 저장된 회차 수": saved
-    })
-
-# 루트 주소는 확인용
-@app.route("/")
+@app.route('/')
 def index():
-    return "Power Ladder Prediction API"
+    return '✅ 서버 정상 작동 중!'
 
-if __name__ == "__main__":
+@app.route('/run-manual')
+def run_manual():
+    entry = fetch_current_result()
+    if not entry:
+        return jsonify({'status': 'fail', 'message': '데이터 수집 실패'})
+
+    existing = get_existing_rounds()
+    key = (entry['game_date'], entry['round'])
+    if key not in existing:
+        save_to_sheet(entry)
+        return jsonify({'status': 'saved', 'data': entry})
+    else:
+        print("⚠️ 이미 저장된 회차입니다.")
+        return jsonify({'status': 'exists', 'data': entry})
+
+if __name__ == '__main__':
     app.run(debug=True)
