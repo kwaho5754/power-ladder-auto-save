@@ -1,12 +1,12 @@
 import requests
 import json
 import gspread
+import os  # ✅ 추가
 from oauth2client.service_account import ServiceAccountCredentials
 from datetime import datetime
 
 print("🔵 자동 저장 시작")
 
-# URL
 URL = "https://ntry.com/data/json/games/power_ladder/recent_result.json"
 
 def fetch_latest_result():
@@ -15,7 +15,7 @@ def fetch_latest_result():
             "User-Agent": "Mozilla/5.0"
         }
         response = requests.get(URL, headers=headers)
-        response.raise_for_status()  # HTTP 에러 시 예외 발생
+        response.raise_for_status()
         data = response.json()
         return data
     except requests.exceptions.RequestException as e:
@@ -46,7 +46,7 @@ def save_to_sheet(data):
         return
 
     sheet = client.open("실시간결과").worksheet("예측결과")
-    existing_rounds = sheet.col_values(2)  # B열 (date_round)
+    existing_rounds = sheet.col_values(2)
     
     latest_round = str(data["date_round"])
     if latest_round in existing_rounds:
