@@ -1,82 +1,80 @@
 import requests
-import json
-import os
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
+from datetime import datetime
+import os  # ← 이 부분 중요!
 
-def fetch_latest_result():
-    url = "https://ntry.com/data/json/games/power_ladder/recent_result.json"
+# 구글 인증
+def authenticate_google_sheets():
     try:
-        response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
-        response.raise_for_status()
-        data = response.json()
-        print("✅ 응답 상태 코드:", response.status_code)
-        print("✅ 응답 내용:", data)
-        return data
-    except Exception as e:
-        print("❌ 회차 데이터 불러오기 실패:", e)
-        return None
-
-def load_credentials():
-    try:
-        json_data = os.environ.get("GOOGLE_SHEET_JSON")
-        if not json_data:
+        json_str = os.environ.get("GOOGLE_SHEET_JSON")
+        if json_str is None:
             raise ValueError("환경변수 GOOGLE_SHEET_JSON 없음")
-        info = json.loads(json_data)
+        with open("cred.json", "w") as f:
+            f.write(json_str)
         scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-        credentials = ServiceAccountCredentials.from_json_keyfile_dict(info, scope)
-        return gspread.authorize(credentials)
+        creds = ServiceAccountCredentials.from_json_keyfile_name("cred.json", scope)
+        client = gspread.authorize(creds)
+        return client
     except Exception as e:
-        print("❌ 구글 인증 실패:", e)
+        print("❗ 구글 인증 실패:", e)
         return None
 
-def get_last_saved_round(sheet):
+# 실시간 회차 데이터 요청
+def fetch_recent_results():
     try:
-        values = sheet.get_all_values()
-        if len(values) < 2:
-            return 0
-        return int(values[-1][1])  # 두 번째 열 = 회차 번호
+        url = "https://ntry.com/data/json/games/power_ladder/recent_result.json"
+        headers = {"User-Agent": "Mozilla/5.0"}
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()
+        print("✅ 응답 상태 코드:", response.status_code)
+        return response.json()  # 결과는 리스트
     except Exception as e:
-        print("❌ 마지막 저장 회차 확인 실패:", e)
+        print("⚠️ 회차 데이터 불러오기 실패:", e)
+        return []
+
+# 시트에서 마지막 저장 회차 확인
+def get_last_round(sheet):
+    values = sheet.get_all_values()
+    if len(values) < 2:
         return 0
+    return int(values[-1][1])  # 두 번째 열이 회차
 
-def save_result_to_sheet(sheet, result):
+# 시트에 저장
+def save_to_sheet(sheet, data):
     try:
-        sheet.append_row([
-            result.get("date", ""),
-            result.get("round", ""),
-            result.get("result", {}).get("odd_even", ""),
-            result.get("result", {}).get("start_point", ""),
-            result.get("result", {}).get("line_count", "")
-        ])
-        print("✅ 저장 완료:", result)
+        new_row = [
+            data["reg_date"],
+            data["date_round"],
+            data["start_point"],
+            data["line_count"],
+            data["odd_even"]
+        ]
+        sheet.append_row(new_row)
+        print("✅ 저장 완료:", new_row)
     except Exception as e:
-        print("❌ 시트 저장 실패:", e)
+        print("❗ 저장 실패:", e)
 
+# 메인 실행
 def main():
-    print("📌 자동 저장 시작")
-    result = fetch_latest_result()
-    if result is None:
+    print("🔄 자동 저장 시작")
+    client = authenticate_google_sheets()
+    if client is None:
         return
 
-    gc = load_credentials()
-    if gc is None:
+    sheet = client.open("실시간결과").worksheet("예측결과")
+    latest_result = fetch_recent_results()
+
+    if not latest_result:
+        print("ℹ️ 저장할 데이터 없음")
         return
 
-    try:
-        sh = gc.open_by_key("1HXRIbAOEotWONqG3FVT9iub9oWNANs7orkUKjmpqfn4")
-        sheet = sh.worksheet("예측결과")
-    except Exception as e:
-        print("❌ 구글 시트 열기 실패:", e)
-        return
+    current_round = int(latest_result[0]["date_round"])
+    last_saved_round = get_last_round(sheet)
 
-    last_saved = get_last_saved_round(sheet)
-    current_round = result.get("round", 0)
-    print("📌 가장 마지막 저장된 회차:", last_saved)
-    print("📌 현재 회차:", current_round)
-
-    if current_round > last_saved:
-        save_result_to_sheet(sheet, result)
+    if current_round > last_saved_round:
+        print(f"🆕 새 회차 감지됨: {current_round}")
+        save_to_sheet(sheet, latest_result[0])
     else:
         print("ℹ️ 저장할 새 회차 없음")
 
