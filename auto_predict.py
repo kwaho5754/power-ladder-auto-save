@@ -1,26 +1,54 @@
 import requests
-import json
-from datetime import datetime
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
+from flask import Flask
 
-# ✅ 현재 시각 출력
-now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-print(f"🟢 [Now] - 자동 예측 실행 중...")
+app = Flask(__name__)
 
-# ✅ 파워사다리 최신 결과 가져오기
-url = "https://ntry.com/data/json/games/power_ladder/recent_result.json"
-try:
+# 구글 시트 인증
+scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+creds = ServiceAccountCredentials.from_json_keyfile_name("google_sheet_key.json", scope)
+client = gspread.authorize(creds)
+
+# 시트 정보
+SHEET_ID = "1HXRIbAOEotWONqG3FVT9iub9oWNANs7orkUKjmpqfn4"
+SHEET_NAME = "예측결과"
+sheet = client.open_by_key(SHEET_ID).worksheet(SHEET_NAME)
+
+@app.route("/")
+def index():
+    return "Power Ladder Auto Save Service"
+
+@app.route("/save", methods=["GET"])
+def save_data():
+    # JSON 데이터 요청
+    url = "https://ntry.com/data/json/games/power_ladder/recent_result.json"
     response = requests.get(url)
     data = response.json()
-    round_number = data[-1]["date_round"] # ✅ 리스트 첫 번째 요소의 딕셔너리에서 접근
-    print(f"✅ 현재 회차: {round_number}")
-except Exception as e:
-    print(f"❌ 오류: 실시간 데이터 불러오기 실패 - {e}")
-    exit()
 
-# ✅ 예측 (단순 예시)
-ranking = ["좌삼짝", "우삼홀", "좌사홀"]
-print("📊 예측 결과")
-print(f"🥇 1위: {ranking[0]}")
-print(f"🥈 2위: {ranking[1]}")
-print(f"🥉 3위: {ranking[2]}")
+    # 시트에서 마지막 회차 가져오기
+    records = sheet.get_all_records()
+    existing_rounds = {str(row["회차"]) for row in records if "회차" in row}
 
+    # 저장할 데이터 구성
+    new_data = []
+    for row in data["rows"]:
+        round_no = str(row["round"])
+        if round_no not in existing_rounds:
+            new_data.append([
+                row["date"],
+                row["round"],
+                row["time"],
+                row["start_ladder"],
+                row["ladder_count"],
+                row["result"]
+            ])
+
+    # 저장
+    if new_data:
+        sheet.append_rows(new_data)
+        return f"{len(new_data)}개 저장됨"
+    return "중복 없음"
+
+if __name__ == "__main__":
+    app.run()
