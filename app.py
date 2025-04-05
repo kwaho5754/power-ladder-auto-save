@@ -1,67 +1,67 @@
-import os
-import json
-import requests
 from flask import Flask
+import requests
 import gspread
-from google.oauth2.service_account import Credentials
+import json
+import os
+from oauth2client.service_account import ServiceAccountCredentials
+from datetime import datetime
 
-# 환경변수에서 서비스 계정 JSON 저장
-credentials_json = os.getenv("GOOGLE_SHEET_JSON")
-with open("google_sheet_credentials.json", "w") as f:
-    f.write(credentials_json)
-
-# 인증
-scopes = ["https://www.googleapis.com/auth/spreadsheets"]
-creds = Credentials.from_service_account_file("google_sheet_credentials.json", scopes=scopes)
-client = gspread.authorize(creds)
-
-# 구글 시트 열기
-spreadsheet_id = "1HXRIbAOEotWONqG3FVT9iub9oWNANs7orkUKjmpqfn4"
-sheet_name = "예측결과"
-sheet = client.open_by_key(spreadsheet_id).worksheet(sheet_name)
-
-# Flask 앱
 app = Flask(__name__)
 
 @app.route('/')
-def home():
+def index():
     return '✅ Power Ladder Auto Save is running!'
 
-@app.route('/save_recent_result', methods=['GET'])
+@app.route('/save_recent_result')
 def save_recent_result():
     try:
-        url = 'https://ntry.com/data/json/games/power_ladder/recent_result.json'
+        # ▶️ 1. 실시간 결과 JSON 주소 요청
+        url = "https://ntry.com/data/json/games/power_ladder/recent_result.json"
         response = requests.get(url)
-        if response.status_code != 200:
-            return '❌ Failed to fetch recent result', 500
-
         data = response.json()
 
-        # 빈 리스트 방어 처리
-        if isinstance(data, list):
-            if not data:
-                return '❌ No data received (empty list)', 200
-            data = data[0]
-        elif not isinstance(data, dict):
-            return '❌ Unexpected data format', 500
+        # ⚠️ 리스트가 비어있으면 예외 처리
+        if not isinstance(data, list) or len(data) == 0:
+            return "⚠️ No recent result data available.", 500
 
-        round_number = str(data['date_round'])
-        game_time = data['reg_date']
-        results = [data['odd_even'], data['start_point'], data['line_count']]
+        # ▶️ 2. 가장 최신 회차 데이터 추출
+        latest = data[0]
+        round_number = str(latest.get('date_round', ''))
+        reg_date = latest.get('reg_date', '')
+        start_point = latest.get('start_point', '')
+        line_count = latest.get('line_count', '')
+        odd_even = latest.get('odd_even', '')
 
-        existing_data = sheet.get_all_values()
-        existing_rounds = [row[0] for row in existing_data]
+        # ▶️ 3. 구글 시트 인증 (환경변수에서 불러와 파일로 저장)
+        json_str = os.environ.get('GOOGLE_SHEET_JSON')
+        if not json_str:
+            return "⚠️ GOOGLE_SHEET_JSON env variable not found", 500
 
-        if round_number in existing_rounds:
-            return f'🔁 Already saved round {round_number}', 200
+        json_path = '/tmp/credential.json'
+        with open(json_path, 'w') as f:
+            f.write(json_str)
 
-        new_row = [round_number, game_time] + results
-        sheet.append_row(new_row)
+        # ▶️ 4. Google Sheets API 연결
+        scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
+        credentials = ServiceAccountCredentials.from_json_keyfile_name(json_path, scope)
+        gc = gspread.authorize(credentials)
 
-        return f'✅ Saved round {round_number}', 200
+        # ▶️ 5. 구글 시트 열기 및 시트 선택
+        sheet_id = '1HXRIbAOEotWONqG3FVT9iub9oWNANs7orkUKjmpqfn4'  # 실시간결과 문서 ID
+        sheet = gc.open_by_key(sheet_id).worksheet('예측결과')
+
+        # ▶️ 6. 중복 확인: 이미 있는 회차인지 확인
+        existing = sheet.col_values(1)
+        if round_number in existing:
+            return f"⚠️ Round {round_number} already exists.", 200
+
+        # ▶️ 7. 시트에 새 데이터 추가
+        sheet.append_row([round_number, reg_date, start_point, line_count, odd_even])
+        return f"✅ Round {round_number} saved successfully!", 200
 
     except Exception as e:
-        return f'❌ Internal error: {str(e)}', 500
+        return f"❌ Internal error: {str(e)}", 500
+
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=10000)
+    app.run(debug=True)
