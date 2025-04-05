@@ -1,67 +1,78 @@
+import os
 import json
 import requests
 import gspread
-from google.oauth2.service_account import Credentials
+from datetime import datetime
+from oauth2client.service_account import ServiceAccountCredentials
 
-# 인증
-scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+# 환경변수에서 구글 시트 JSON 키 가져오기
 json_data = json.loads(os.environ["GOOGLE_SHEET_JSON"])
-credentials = Credentials.from_service_account_info(json_data, scopes=scope)
+
+# 구글 시트 인증
+scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+credentials = ServiceAccountCredentials.from_json_keyfile_dict(json_data, scope)
 gc = gspread.authorize(credentials)
 
-# 시트 열기
+# 구글 시트 열기
 spreadsheet = gc.open_by_key("1HXRIbAOEotWONqG3FVT9iub9oWNANs7orkUKjmpqfn4")
 worksheet = spreadsheet.worksheet("예측결과")
 
-# 최신 저장된 회차 확인
-def get_latest_round():
-    records = worksheet.get_all_values()
-    if len(records) > 1:
-        last_row = records[-1]
-        return last_row[1]  # 두 번째 열: 회차 번호
-    return None
+# 실시간 결과 JSON 주소 (✅ 최신 회차 정보)
+url = "https://ntry.com/data/json/games/power_ladder/recent_result.json"
 
-# 실시간 데이터 불러오기
-def fetch_recent_results():
-    url = "https://ntry.com/data/json/games/power_ladder/recent_result.json"
-    headers = {"User-Agent": "Mozilla/5.0"}
-    response = requests.get(url, headers=headers)
-    
-    if response.status_code == 200:
+def fetch_latest_result():
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
         data = response.json()
         return data
-    else:
-        print(f"회차 데이터 불러오기 실패: {response.status_code}")
-        return []
+    except Exception as e:
+        print("❌ 회차 데이터 불러오기 실패:", e)
+        return None
 
-# 시트에 저장
-def save_result_to_sheet(result):
-    reg_date = result["reg_date"]
-    date_round = result["date_round"]
-    start_point = result["start_point"]
-    line_count = result["line_count"]
-    odd_even = result["odd_even"]
-    worksheet.append_row([reg_date, date_round, start_point, line_count, odd_even])
-    print("✅ 시트에 저장 완료:", reg_date, date_round)
+def get_last_round_from_sheet():
+    try:
+        records = worksheet.get_all_values()
+        if len(records) < 2:
+            return None
+        last_row = records[-1]
+        return int(last_row[1])  # 회차 숫자
+    except Exception as e:
+        print("❌ 시트에서 마지막 회차 불러오기 실패:", e)
+        return None
 
-# 메인 실행
+def save_to_sheet(data):
+    try:
+        reg_date = data["reg_date"]
+        date_round = data["date_round"]
+        start_point = data["start_point"]
+        line_count = data["line_count"]
+        odd_even = data["odd_even"]
+
+        row = [reg_date, date_round, start_point, line_count, odd_even]
+        worksheet.append_row(row)
+        print("✅ 저장 완료:", row)
+    except Exception as e:
+        print("❌ 시트 저장 실패:", e)
+
 def main():
     print("🔄 자동 저장 시작")
-    latest_round = get_latest_round()
-    results = fetch_recent_results()
 
-    if not results:
-        print("⚠️ 가져온 데이터 없음")
+    latest_data = fetch_latest_result()
+    if not latest_data:
+        print("⚠️ 가져온 데이터가 없습니다.")
         return
 
-    current_result = results[0]  # 가장 최신 회차
-    current_round = str(current_result["date_round"])  # 문자열로 변환
-    
-    if current_round != latest_round:
-        save_result_to_sheet(current_result)
+    current_round = int(latest_data.get("date_round", 0))
+    last_saved_round = get_last_round_from_sheet()
+
+    print("📌 가장 마지막 저장된 회차:", last_saved_round)
+    print("📌 지금 가져온 최신 회차:", current_round)
+
+    if current_round != last_saved_round:
+        save_to_sheet(latest_data)
     else:
-        print("ℹ️ 이미 저장된 회차:", current_round)
+        print("ℹ️ 저장할 새 회차 없음")
 
 if __name__ == "__main__":
-    import os
     main()
