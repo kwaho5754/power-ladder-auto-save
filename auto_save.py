@@ -20,45 +20,41 @@ def authorize_google_sheets():
     gc = gspread.authorize(credentials)
     return gc
 
-# 시트에서 저장된 회차 확인
+# 시트에서 이미 저장된 회차 가져오기
 def get_saved_rounds(worksheet):
-    rounds = worksheet.col_values(1)[1:]
+    rounds = worksheet.col_values(1)[1:]  # 첫 번째 열, 헤더 제외
     return set(rounds)
 
-# 회차 데이터 요청 (예외 처리 추가)
+# 회차 데이터 요청
 def fetch_recent_results():
     url = "https://ntry.com/data/json/games/power_ladder/list.json"
     headers = {
         "User-Agent": "Mozilla/5.0"
     }
-    try:
-        response = requests.get(url, headers=headers, timeout=5)
-        response.raise_for_status()
-        data = response.json()
-        return data.get("list", [])[:5]
-    except Exception as e:
-        print("⚠️ 회차 데이터 불러오기 실패:", e)
-        return []
+    response = requests.get(url, headers=headers)
+    data = response.json()
+    return data["list"][:5]  # 최근 5개 회차
 
-# 새 회차 저장
+# 회차 저장
 def save_new_rounds(worksheet, recent_data, saved_rounds):
     new_count = 0
     for item in reversed(recent_data):
         round_number = str(item["round"])
         if round_number in saved_rounds:
-            continue
+            continue  # 이미 저장된 회차는 건너뜀
 
         created_at = item["created_at"]
-        result = item["result"].replace(",", "-")
+        result = item["result"].replace(",", "-")  # 예: "좌사홀,우삼짝,좌삼짝,우사홀"
+
         worksheet.append_row([round_number, created_at, result])
         new_count += 1
-        print(f"✅ 저장 완료: {round_number}회차")
+        print(f"{round_number}회차 저장됨")
     if new_count == 0:
-        print("ℹ️ 저장할 새 회차 없음")
+        print("모든 회차가 이미 저장됨")
 
-# 실행
+# 메인 실행
 def main():
-    print("🟢 자동 저장 시작")
+    print("자동 저장 시작")
     gc = authorize_google_sheets()
     sh = gc.open_by_key("1HXRIbAOEotWONqG3FVT9iub9oWNANs7orkUKjmpqfn4")
     worksheet = sh.worksheet("예측결과")
