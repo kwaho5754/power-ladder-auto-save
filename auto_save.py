@@ -1,71 +1,74 @@
 import requests
-import gspread
 import json
-import os
-from datetime import datetime
+import gspread
 from oauth2client.service_account import ServiceAccountCredentials
+from datetime import datetime
 
-# 구글 시트 인증
-def authorize_google_sheets():
-    json_str = os.environ.get("GOOGLE_SHEET_JSON")
-    if not json_str:
-        raise ValueError("환경변수 GOOGLE_SHEET_JSON이 설정되지 않았습니다.")
+print("🔵 자동 저장 시작")
 
-    info = json.loads(json_str)
-    scope = [
-        "https://spreadsheets.google.com/feeds",
-        "https://www.googleapis.com/auth/drive"
-    ]
-    credentials = ServiceAccountCredentials.from_json_keyfile_dict(info, scope)
-    gc = gspread.authorize(credentials)
-    return gc
+# URL
+URL = "https://ntry.com/data/json/games/power_ladder/recent_result.json"
 
-# 시트에서 저장된 회차 확인
-def get_saved_rounds(worksheet):
-    rounds = worksheet.col_values(1)[1:]
-    return set(rounds)
-
-# 회차 데이터 요청 (예외 처리 추가)
-def fetch_recent_results():
-    url = "https://ntry.com/data/json/games/power_ladder/list.json"
-    headers = {
-        "User-Agent": "Mozilla/5.0"
-    }
+def fetch_latest_result():
     try:
-        response = requests.get(url, headers=headers, timeout=5)
-        response.raise_for_status()
+        headers = {
+            "User-Agent": "Mozilla/5.0"
+        }
+        response = requests.get(URL, headers=headers)
+        response.raise_for_status()  # HTTP 에러 시 예외 발생
         data = response.json()
-        return data.get("list", [])[:5]
+        return data
+    except requests.exceptions.RequestException as e:
+        print("❗ 회차 데이터 불러오기 실패:", e)
+        return None
+    except json.decoder.JSONDecodeError as e:
+        print("❗ JSON 디코드 실패:", e)
+        return None
+
+def load_credentials():
+    try:
+        credentials_dict = json.loads(os.environ["GOOGLE_SHEET_JSON"])
+        scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
+        creds = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
+        client = gspread.authorize(creds)
+        return client
     except Exception as e:
-        print("⚠️ 회차 데이터 불러오기 실패:", e)
-        return []
+        print("❗ 구글 인증 실패:", e)
+        return None
 
-# 새 회차 저장
-def save_new_rounds(worksheet, recent_data, saved_rounds):
-    new_count = 0
-    for item in reversed(recent_data):
-        round_number = str(item["round"])
-        if round_number in saved_rounds:
-            continue
+def save_to_sheet(data):
+    if not data:
+        print("❌ 저장할 데이터 없음")
+        return
 
-        created_at = item["created_at"]
-        result = item["result"].replace(",", "-")
-        worksheet.append_row([round_number, created_at, result])
-        new_count += 1
-        print(f"✅ 저장 완료: {round_number}회차")
-    if new_count == 0:
+    client = load_credentials()
+    if not client:
+        return
+
+    sheet = client.open("실시간결과").worksheet("예측결과")
+    existing_rounds = sheet.col_values(2)  # B열 (date_round)
+    
+    latest_round = str(data["date_round"])
+    if latest_round in existing_rounds:
         print("ℹ️ 저장할 새 회차 없음")
+        return
 
-# 실행
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    row = [
+        now,
+        data["date_round"],
+        data["round"],
+        data["result"],
+        data["start_point"],
+        data["line_count"],
+        data["odd_even"]
+    ]
+    sheet.append_row(row)
+    print("✅ 시트 저장 완료:", row)
+
 def main():
-    print("🟢 자동 저장 시작")
-    gc = authorize_google_sheets()
-    sh = gc.open_by_key("1HXRIbAOEotWONqG3FVT9iub9oWNANs7orkUKjmpqfn4")
-    worksheet = sh.worksheet("예측결과")
-
-    saved_rounds = get_saved_rounds(worksheet)
-    recent_data = fetch_recent_results()
-    save_new_rounds(worksheet, recent_data, saved_rounds)
+    latest_result = fetch_latest_result()
+    save_to_sheet(latest_result)
 
 if __name__ == "__main__":
     main()
