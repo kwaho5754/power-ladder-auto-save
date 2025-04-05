@@ -2,7 +2,7 @@ name: Auto Save Recent Result
 
 on:
   schedule:
-    - cron: "*/5 * * * *"  # 매 5분마다 실행 (UTC 기준, 한국은 +9시간)
+    - cron: "*/5 1-23 * * *"  # 한국 시간 기준, 매 5분마다 실행 (1시부터 23시까지)
   workflow_dispatch:       # 수동 실행 버튼도 가능하게 설정
 
 jobs:
