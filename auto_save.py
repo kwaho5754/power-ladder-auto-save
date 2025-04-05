@@ -1,65 +1,65 @@
-
+import json
 import requests
 import gspread
-import json
+from oauth2client.service_account import ServiceAccountCredentials
 import os
 from datetime import datetime
-from oauth2client.service_account import ServiceAccountCredentials
 
-# 구글 시트 인증
-def authorize_google_sheets():
-    json_str = os.environ.get("GOOGLE_SHEET_JSON")
-    if not json_str:
-        raise ValueError("환경변수 GOOGLE_SHEET_JSON이 설정되지 않았습니다.")
+# 환경 변수에서 서비스 계정 JSON 로드
+json_str = os.getenv("GOOGLE_SHEET_JSON")
+service_account_info = json.loads(json_str)
 
-    info = json.loads(json_str)
-    scope = [
-        "https://spreadsheets.google.com/feeds",
-        "https://www.googleapis.com/auth/drive"
-    ]
-    credentials = ServiceAccountCredentials.from_json_keyfile_dict(info, scope)
-    gc = gspread.authorize(credentials)
-    return gc
+# Google Sheets 인증
+scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+credentials = ServiceAccountCredentials.from_json_keyfile_dict(service_account_info, scope)
+gc = gspread.authorize(credentials)
 
-# 시트에서 이미 저장된 회차 가져오기
-def get_saved_rounds(worksheet):
-    rounds = worksheet.col_values(1)[1:]  # 첫 번째 열, 헤더 제외
-    return set(rounds)
+# 시트 열기
+spreadsheet = gc.open_by_key("1HXRIbAOEotWONqG3FVT9iub9oWNANs7orkUKjmpqfn4")
+worksheet = spreadsheet.worksheet("예측결과")
 
-# 회차 데이터 요청
+# 최근 결과 가져오기 함수 (User-Agent 추가)
 def fetch_recent_results():
-    url = "https://ntry.com/data/json/games/power_ladder/list.json"
-    response = requests.get(url)
-    data = response.json()
-    return data["list"][:5]  # 최근 5개 회차
+    url = "https://ntry.com/data/json/games/power_ladder/recent_result.json"
+    headers = {
+        "User-Agent": "Mozilla/5.0"
+    }
+    response = requests.get(url, headers=headers)
+    print("응답 상태 코드:", response.status_code)
+    print("응답 내용:", response.text)
+    return response.json()
 
-# 회차 저장
-def save_new_rounds(worksheet, recent_data, saved_rounds):
-    new_count = 0
-    for item in reversed(recent_data):
-        round_number = str(item["round"])
-        if round_number in saved_rounds:
-            continue  # 이미 저장된 회차는 건너뜀
+# 시트에 이미 저장된 회차 번호 가져오기
+def get_saved_rounds():
+    data = worksheet.get_all_values()
+    return {row[0] for row in data[1:]}  # 첫 행은 헤더
 
-        created_at = item["created_at"]
-        result = item["result"].replace(",", "-")  # 예: "좌사홀,우삼짝,좌삼짝,우사홀"
+# 시트에 저장
+def save_to_sheet(result):
+    saved_rounds = get_saved_rounds()
+    round_num = str(result["round"])
+    if round_num in saved_rounds:
+        print(f"이미 저장된 회차: {round_num}")
+        return
 
-        worksheet.append_row([round_number, created_at, result])
-        new_count += 1
-        print(f"{round_number}회차 저장됨")
-    if new_count == 0:
-        print("모든 회차가 이미 저장됨")
+    date = result["date"]
+    ladder = result["ladder"]
+    left_right = ladder["position"]
+    count = ladder["count"]
+    parity = ladder["parity"]
+    
+    new_row = [round_num, date, left_right, count, parity]
+    worksheet.append_row(new_row)
+    print(f"✅ 저장 완료: {new_row}")
 
 # 메인 실행
 def main():
-    print("자동 저장 시작")
-    gc = authorize_google_sheets()
-    sh = gc.open_by_key("1HXRIbAOEotWONqG3FVT9iub9oWNANs7orkUKjmpqfn4")
-    worksheet = sh.worksheet("예측결과")
-
-    saved_rounds = get_saved_rounds(worksheet)
     recent_data = fetch_recent_results()
-    save_new_rounds(worksheet, recent_data, saved_rounds)
+    if isinstance(recent_data, dict):
+        save_to_sheet(recent_data)
+    else:
+        print("⚠️ 가져온 데이터가 올바르지 않습니다.")
 
 if __name__ == "__main__":
     main()
+
