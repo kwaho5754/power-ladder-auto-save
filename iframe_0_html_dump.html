@@ -1,0 +1,1218 @@
+<html lang="ko" class=" websockets websocketsbinary"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no">
+  <title>파워볼 분석 커뮤니티 - 엔트리</title>
+  <meta http-equiv="Content-Script-Type" content="text/javascript">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="apple-mobile-web-app-title" content="파워볼 분석 커뮤니티 - 엔트리">
+  <meta name="generator" content="ntry.com">
+  <meta name="author" content="ntry.com">
+  <meta name="keywords" content="파워볼,파워볼게임,엔트리,엔트리파워볼,스포츠,스포츠스코,FX게임,실시간 스코어,축구,야구,농구,배구,하키,테니스,UFC,NBA,NHL,MLB,NPB,KHL,스포츠 경기결과 제공,전문가 스포츠 분석 데이터 무료제공,파워볼,FX게임">
+  <meta name="description" content="파워볼,파워볼게임,엔트리파워볼,스포츠,스포츠스코어,FX게임,FX마진,실시간 스코어,축구,야구,농구,배구,하키,테니스,UFC,NBA,NHL,MLB,NPB,KHL,스포츠 경기결과 제공,전문가 스포츠 분석 데이터 무료제공,파워볼,FX게임 관련 커뮤니티 엔트리입니다">
+  <meta name="robots" content="ALL,INDEX,FOLLOW">
+  <meta name="format-detection" content="telephone=no">
+
+  <meta property="og:title" content="파워볼 분석 커뮤니티 - 엔트리 :: ">
+  <meta property="og:site_name" content="ntry">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://ntry.com">
+  <meta property="og:image" content="/public/img/og_image.png">
+  <meta property="og:description" content="파워볼 분석 커뮤니티 - 엔트리 :: ">
+  <meta property="og:locale" content="ko">
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:site" content="https://ntry.com">
+  <meta name="twitter:title" content="파워볼 분석 커뮤니티 - 엔트리 :: ">
+  <meta name="twitter:description" content="파워볼 분석 커뮤니티 - 엔트리 :: ">
+  <meta name="twitter:image:src" content="/public/img/og_image.png">
+
+  <meta itemprop="name" content="파워볼 분석 커뮤니티 - 엔트리 :: ">
+  <meta itemprop="url" content="https://ntry.com/">
+  <meta itemprop="image" content="/public/img/og_image.png">
+
+  <link rel="shortcut icon" type="image/x-icon" href="/public/img/favicon.ico">
+  <link rel="stylesheet" type="text/css" href="/public/css/reset.css">
+  <link rel="stylesheet" type="text/css" href="/public/css/chat_deco.css?v=200708">
+  <link rel="stylesheet" type="text/css" href="/public/css/open_chat_frame.css?v=20241211104628">
+  <script type="text/javascript" src="/public/js/jquery-1.11.3.min.js"></script>
+  <script type="text/javascript" src="/public/js/common.js?v=20241211104628"></script>
+  <script type="text/javascript">
+    var site_is_admin_auth = '';
+    //var message_push_server = 'api2.ntry.com:20080:8080';
+    var message_push_server = 'api2.ntry.com:20080';
+    var filter_words = "자지,보지,섹스,씨발,시발,병신,시1발,섹.스,섹1스,호구,혹우,호1구,흑우,씨1발,사망,창년,ㅄ,보즤,보쥐,시벌,씹새,씹세,개씹세,자쥐,자1지,보1지. 사 망,사1망,자 지,개세,개새,솨망,사.망,쏴망,샤망,죶,십 새,십 세,사-망,보 쥐,보.지,ㅅ1발,병1신, 병 신,ㅆ ㅣ발,호 구,존나,존1나,존 나,사.망,ㅂ.ㅅ,ㅅ1,십세,십새,ㅅ ㅣ발,븅신,씨벌,새끼,4망,ㅅㅂ,ㅂ/ㅅ,씹 새,ㅅ ㅏ,좇,병 신,개색,개 색,ㅂ ㅅ,씨2발,시 발,보 지,씨 발,시 팔,씨.발,섹 스,시 발,씨 발,시팔,메이저급,충10,배팅가능,보빨,가입머니,무료머니,가입시,부본사,사다리분석기,무료공유,도끼티비,도끼TV,씨팔,구푼,할구,ㅅ1ㅂ,ㅅ!ㅂ,ㅅ.유츌픽,후뷸제,유출,유출픽,후불제,U출픽,유츨픽,U츨픽,공식업체,인증업체,공식인증,협력업체,검증업체,앰이,애미,에미,어미,엄마,니미,으미, 카톡,유출픽,유츌픽,4425,사사이오,좃,좆,까떡,AU84,A.U.8.4,에이유팔사,ㅋrㅋr5,AU82,5808 2216,vm09,cctv1,AU82,ㅋrㅋr오,AU82,ⓐⓒⓐⓒ77,ⓐ.ⓒ.ⓐ.ⓒ,ⓐ,ⓒ,ⓐ,ⓒ77,bb73,연병장,zm49,vvs66,a1322c,로또볼,papp999,9638,계좌정산,ppap999,유추울픽,팔사구일구,NT9999,nt9999,Nt9999,카카오툭Nt9999,카카오톡Nt9999,KK62,nt8888,카카오툭nt8888,카카오툭Nt8888,g0000,goooo,캬툑,연락줘요,ㅋr툨,g9000,ㅋr톡,쥐9000,ㅋr툑,깨톡,꺠톡,캐튝,캐튝아이뒤,LS83,ga9000,ㅌ ㅔㄹ레,ㅌㅔㄹ레,jxc101,etda00,it18,it55, it 55, i t 5 5,po50,KF32,zo99,KK62, momo143, it 55, 카카오톡, fooxx88, 유툽, 유튜브, youtube, YOUTUBE, KK62, K K 6 2, 010,sb24,dp55, mms101,NTRY24,ntry24,pick24,엔트리주소,엔트리안내,사업가답지,답지동행,답지선착순,대우,혜택,부재,마틴,수익방,수익룸,업계,시바,씨바,이니텍".split(",");
+    var MPQ = [];
+    var IS_MOBILE = false;
+    var ssid = 's117bsc46bk6n8bd52ta40crn3';
+    var mbid = '';
+    var initChat = true;
+  </script>
+</head>
+<body>
+
+<div id="open_chat_guide" onclick="openGuide()">
+  <p>오픈챗규정</p>
+  <img class="close_guide" src="/public/img/chat/ico_close_w.svg">
+  <div class="guide_text">
+<!--    <p>전과 사유</p>-->
+<!--    - 무의미한 단어 반복 작성<br/>-->
+<!--    - 상대 비방, 반말 또는 욕설<br/>-->
+<!--    - 비매너 채팅<br/>-->
+<!--    - 회원간 싸움 및 분란 조장<br/>-->
+<!--    - 운영진 비방 및 욕설<br/>-->
+<!--    - 국내 타 스코어 사이트 언급<br/>-->
+<!--    - 일반, 낚시성 거짓중계 (결과에 대한 허위 중계)<br/>-->
+<!--    - 타 회원 부모, 가족욕설 (형사 고소 협조)<br/>-->
+<!--    - 지역 감정유발/기타 분란 행위<br/>-->
+<!--    - 욕설/싸움/기타 비매너 행위<br/>-->
+<!--    - 타 회원 비하 발언<br/>-->
+<!--    - 운영진의 판단하에 운영정책에 위배되는 행위<br/>-->
+<!--    (ex:기타 채팅창 분위기를 해치고 있다 판단되는 경우)<br/>-->
+<!--    (ex:불법 사이트로 유도하는 대화라고 판단되는 경우)<br/>-->
+
+    <p>오픈챗 페널티 부여 사유</p>
+    - 상대 비방 또는 욕설 및 비매너 채팅 <br>
+    - 회원간 분란 조장 <br>
+    - 운영진 및 사이트 비방 <br>
+    - 거짓 중계 <br>
+
+    <p>회원 탈퇴 사유</p>
+    - 불법 사이트 링크 및 불법적인 언급 <br>
+    - 카페, 블로그, 카톡, 링크 공유 <br>
+    - 타 커뮤티에 관한 언급 <br>
+<!--    - 운영진의 판단하에 운영정책에 위배되는 행위<br/>-->
+<!--    (ex:기타 채팅창 분위기를 해치고 있다 판단되는 경우)<br/>-->
+<!--    (ex:불법 사이트로 유도하는 대화라고 판단되는 경우)<br/>-->
+<!--    ※위 내용은 예시와 기준이며, 상황에 따라 페널티 수위는 변동될 수 있습니다.<br/>-->
+  </div>
+</div>
+
+<div id="issue_wrap" class="issue_wrap ">
+  <p id="chat_title">채팅</p>
+  <div id="message_list" class="global_chat_list">
+    <div class="clean_chat">
+      <span>채팅방 청소 완료 !</span>
+    </div>
+    <!--스크롤 이동 버튼-->
+    <div id="chat_message_scroll" onclick="scrollBottomChat()" style="display: none;">
+      <img src="/public/img/open_chat/icon_down_w.svg">
+    </div>
+    <!--채팅 메세지 관리 버튼-->
+    <img class="img_loading" src="/public/img/layout/loading.gif" alt="loading" style="display: none;">
+    <div id="chat_message_setting">
+      <div class="setting_icon" data-id="open" onclick="handleSettingPopup(this)">
+        <img src="/public/img/open_chat/icon_setting_w.svg">
+      </div>
+      <ul class="setting_menu" data-size="12">
+                  <li id="new_window" href="javascript:;" onclick="manageChatMessage.new_window()">
+            <img src="/public/img/open_chat/icon_window.svg?v=02">
+            <p>새창으로 보기</p>
+          </li>
+                  <li onclick="manageChatMessage.remove_msg()">
+          <img src="/public/img/open_chat/icon_eraser.svg?v=02">
+          <p>채팅 지우기</p>
+        </li>
+        <li id="font-bigger" onclick="manageChatMessage.bigger()">
+          <img src="/public/img/open_chat/icon_expand.svg?v=02">
+          <p>글자 크게</p>
+        </li>
+        <li id="font-smaller" onclick="manageChatMessage.smaller()">
+          <img src="/public/img/open_chat/icon_compress.svg?v=02">
+          <p>글자 작게</p>
+        </li>
+        <li onclick="manageChatMessage.reloading()">
+          <img src="/public/img/open_chat/icon_redo.svg?v=02">
+          <p>새로고침</p>
+        </li>
+              </ul>
+    </div>
+  
+  <div class="item notify_admin" data-type="NOTICE" data-user_id="manager_captain" data-time="1743658500">
+    <img class="level" src="/public/img/level/50x50/admin.png">
+    <span>[알림] 유저홈에서 차단기능을 이용하시면 해당유저의 오픈채팅 내용을 숨길 수 있습니다.</span>
+      </div>
+
+  <div class="item notify_admin" data-type="NOTICE" data-user_id="manager_captain" data-time="1743658560">
+    <img class="level" src="/public/img/level/50x50/admin.png">
+    <span>[알림] 프로젝트 뱃지 미보유 상태에서 프젝 성공이라는 채팅 내용은 채금 대상입니다.</span>
+      </div>
+
+  
+  <div class="ani_item else_event" onclick="clickUserMenu.family('be016345eb33a806afa08b537e8a9932')">
+  <img src="/public/img/open_chat/TOP_FAMILY.png">
+  <div class="sender">
+    <img class="level" src="/public/img/level/50x50/9.png">
+    
+    <p>[배테랑]</p>
+    
+    <p>픽스터베테랑</p>
+  </div>
+  
+  <div class="description">
+    <img src="/public/img/open_chat/quote_l.svg">
+    엔트리 1위 가족방 엔톡확인
+    <img src="/public/img/open_chat/quote_r.svg">
+  </div>
+  
+  </div>
+  
+
+  <div class="item chat_item" data-type="MESSAGE" data-user_id="rm7xoh963bb5cf868c72e99a5577546ffa269413" data-time="1743658800">
+    <div class="chat_user" onclick="handleUserMenu('1743658800-rm7xoh963bb5cf868c72e99a5577546ffa269413')">
+    <img class="level" src="/public/img/level/50x50/1.png">
+    <p class="false">돌돔1</p>
+        <ul class="user_menu" id="user_menu_1743658800-rm7xoh963bb5cf868c72e99a5577546ffa269413">
+      <li>돌돔1</li>
+      <li onclick="clickUserMenu.user_home('rm7xoh963bb5cf868c72e99a5577546ffa269413')">유저홈</li>
+      
+      <li onclick="add_friend(this,'rm7xoh963bb5cf868c72e99a5577546ffa269413');" action="add">구독하기</li>
+      
+      
+      <li onclick="clickUserMenu.family('7546f96b111738580659c21eba11d756')">가족방</li>
+      
+      <li onclick="popup_ntalk('rm7xoh963bb5cf868c72e99a5577546ffa269413', '돌돔1')">엔톡 신청</li>
+            <li onclick="add_bad_friend_popup('돌돔1')">차단</li>
+      <li onclick="open_popup('/helpdesk/report.popup.php?type=openChat&amp;id=rm7xoh963bb5cf868c72e99a5577546ffa269413&amp;channel=lottery', 'report', '383', '455');">
+        신고
+      </li>
+    </ul>
+  </div>
+  <div class="chat_msg ">
+    24시  복구부터 수익까지VVIP 가족방 안내 엔톡&amp;방입장<span style="font-weight:normal;">⭐</span>
+      </div>
+  </div>
+
+  <div class="item chat_item" data-type="MESSAGE" data-user_id="0psk9un537629791b5bc69dc1bc3edbf23cf6c79" data-time="1743658829">
+    <div class="chat_user" onclick="handleUserMenu('1743658829-0psk9un537629791b5bc69dc1bc3edbf23cf6c79')">
+    <img class="level" src="/public/img/level/50x50/2.png">
+    <p class="false">태산몽키</p>
+        <ul class="user_menu" id="user_menu_1743658829-0psk9un537629791b5bc69dc1bc3edbf23cf6c79">
+      <li>태산몽키</li>
+      <li onclick="clickUserMenu.user_home('0psk9un537629791b5bc69dc1bc3edbf23cf6c79')">유저홈</li>
+      
+      <li onclick="add_friend(this,'0psk9un537629791b5bc69dc1bc3edbf23cf6c79');" action="add">구독하기</li>
+      
+      
+      <li onclick="popup_ntalk('0psk9un537629791b5bc69dc1bc3edbf23cf6c79', '태산몽키')">엔톡 신청</li>
+            <li onclick="add_bad_friend_popup('태산몽키')">차단</li>
+      <li onclick="open_popup('/helpdesk/report.popup.php?type=openChat&amp;id=0psk9un537629791b5bc69dc1bc3edbf23cf6c79&amp;channel=lottery', 'report', '383', '455');">
+        신고
+      </li>
+    </ul>
+  </div>
+  <div class="chat_msg ">
+    <span style="font-weight:normal;">☘</span>️1등 픽스터<span style="font-weight:normal;">☘</span>️확실한수익<span style="font-weight:normal;">☘</span>️엔톡&amp;방입장<span style="font-weight:normal;">☘</span>️
+      </div>
+  </div>
+
+  <div class="item notify_admin" data-type="NOTICE" data-user_id="manager_captain" data-time="1743658920">
+    <img class="level" src="/public/img/level/50x50/admin.png">
+    <span>[경고] 유저에 대한 근거 없는 저격 신고 및 비방은 패널티 부여됩니다.</span>
+      </div>
+
+  <div class="item notify_admin" data-type="NOTICE" data-user_id="manager_captain" data-time="1743658980">
+    <img class="level" src="/public/img/level/50x50/admin.png">
+    <span>[도배 규정] 동일 채팅 3회 이상 연속 입력 / 내용은 상이하나 동일인이 4회 이상 연속 입력</span>
+      </div>
+
+  <div class="item chat_item" data-type="MESSAGE" data-user_id="0psk9un537629791b5bc69dc1bc3edbf23cf6c79" data-time="1743658988">
+    <div class="chat_user" onclick="handleUserMenu('1743658988-0psk9un537629791b5bc69dc1bc3edbf23cf6c79')">
+    <img class="level" src="/public/img/level/50x50/2.png">
+    <p class="false">태산몽키</p>
+        <ul class="user_menu" id="user_menu_1743658988-0psk9un537629791b5bc69dc1bc3edbf23cf6c79">
+      <li>태산몽키</li>
+      <li onclick="clickUserMenu.user_home('0psk9un537629791b5bc69dc1bc3edbf23cf6c79')">유저홈</li>
+      
+      <li onclick="add_friend(this,'0psk9un537629791b5bc69dc1bc3edbf23cf6c79');" action="add">구독하기</li>
+      
+      
+      <li onclick="popup_ntalk('0psk9un537629791b5bc69dc1bc3edbf23cf6c79', '태산몽키')">엔톡 신청</li>
+            <li onclick="add_bad_friend_popup('태산몽키')">차단</li>
+      <li onclick="open_popup('/helpdesk/report.popup.php?type=openChat&amp;id=0psk9un537629791b5bc69dc1bc3edbf23cf6c79&amp;channel=lottery', 'report', '383', '455');">
+        신고
+      </li>
+    </ul>
+  </div>
+  <div class="chat_msg ">
+    <span style="font-weight:normal;">☘</span>️1등 픽스터<span style="font-weight:normal;">☘</span>️확실한수익<span style="font-weight:normal;">☘</span>️엔톡&amp;방입장<span style="font-weight:normal;">☘</span>️
+      </div>
+  </div>
+
+  <div class="item notify_admin" data-type="NOTICE" data-user_id="manager_captain" data-time="1743659100">
+    <img class="level" src="/public/img/level/50x50/admin.png">
+    <span>[알림] 유저홈에서 차단기능을 이용하시면 해당유저의 오픈채팅 내용을 숨길 수 있습니다.</span>
+      </div>
+
+  <div class="item notify_admin" data-type="NOTICE" data-user_id="manager_captain" data-time="1743659160">
+    <img class="level" src="/public/img/level/50x50/admin.png">
+    <span>[알림] 프로젝트 뱃지 미보유 상태에서 프젝 성공이라는 채팅 내용은 채금 대상입니다.</span>
+      </div>
+
+  <div class="item notify_admin" data-type="NOTICE" data-user_id="manager_captain" data-time="1743659520">
+    <img class="level" src="/public/img/level/50x50/admin.png">
+    <span>[경고] 유저에 대한 근거 없는 저격 신고 및 비방은 패널티 부여됩니다.</span>
+      </div>
+
+  <div class="item notify_admin" data-type="NOTICE" data-user_id="manager_captain" data-time="1743659580">
+    <img class="level" src="/public/img/level/50x50/admin.png">
+    <span>[도배 규정] 동일 채팅 3회 이상 연속 입력 / 내용은 상이하나 동일인이 4회 이상 연속 입력</span>
+      </div>
+
+  <div class="item notify_admin" data-type="NOTICE" data-user_id="manager_captain" data-time="1743659700">
+    <img class="level" src="/public/img/level/50x50/admin.png">
+    <span>[알림] 유저홈에서 차단기능을 이용하시면 해당유저의 오픈채팅 내용을 숨길 수 있습니다.</span>
+      </div>
+
+  <div class="item chat_item" data-type="MESSAGE" data-user_id="rm7xoh963bb5cf868c72e99a5577546ffa269413" data-time="1743659753">
+    <div class="chat_user" onclick="handleUserMenu('1743659753-rm7xoh963bb5cf868c72e99a5577546ffa269413')">
+    <img class="level" src="/public/img/level/50x50/1.png">
+    <p class="false">돌돔1</p>
+        <ul class="user_menu" id="user_menu_1743659753-rm7xoh963bb5cf868c72e99a5577546ffa269413">
+      <li>돌돔1</li>
+      <li onclick="clickUserMenu.user_home('rm7xoh963bb5cf868c72e99a5577546ffa269413')">유저홈</li>
+      
+      <li onclick="add_friend(this,'rm7xoh963bb5cf868c72e99a5577546ffa269413');" action="add">구독하기</li>
+      
+      
+      <li onclick="clickUserMenu.family('7546f96b111738580659c21eba11d756')">가족방</li>
+      
+      <li onclick="popup_ntalk('rm7xoh963bb5cf868c72e99a5577546ffa269413', '돌돔1')">엔톡 신청</li>
+            <li onclick="add_bad_friend_popup('돌돔1')">차단</li>
+      <li onclick="open_popup('/helpdesk/report.popup.php?type=openChat&amp;id=rm7xoh963bb5cf868c72e99a5577546ffa269413&amp;channel=lottery', 'report', '383', '455');">
+        신고
+      </li>
+    </ul>
+  </div>
+  <div class="chat_msg ">
+    24시  복구부터 수익까지VVIP 가족방 안내 엔톡&amp;방입장<span style="font-weight:normal;">⭐</span>
+      </div>
+  </div>
+
+  <div class="item notify_admin" data-type="NOTICE" data-user_id="manager_captain" data-time="1743659760">
+    <img class="level" src="/public/img/level/50x50/admin.png">
+    <span>[알림] 프로젝트 뱃지 미보유 상태에서 프젝 성공이라는 채팅 내용은 채금 대상입니다.</span>
+      </div>
+
+  
+  <div class="ani_item else_event" onclick="clickUserMenu.user_home('4zq1fxn9bae9dddd953768fceda369371bf93885')">
+  <img src="/public/img/open_chat/BEST_PICKSTER.png">
+  <div class="sender">
+    <img class="level" src="/public/img/level/50x50/best_double.png">
+    
+    <p>[나다팸]</p>
+    
+    <p>나다장미</p>
+  </div>
+  
+  <div class="description">
+    <img src="/public/img/open_chat/quote_l.svg">
+    24시간 활발한 조건없는 가족방 엔톡 문의 ❤
+    <img src="/public/img/open_chat/quote_r.svg">
+  </div>
+  
+  </div>
+  
+
+  <div class="item chat_item" data-type="MESSAGE" data-user_id="0psk9un537629791b5bc69dc1bc3edbf23cf6c79" data-time="1743660039">
+    <div class="chat_user" onclick="handleUserMenu('1743660039-0psk9un537629791b5bc69dc1bc3edbf23cf6c79')">
+    <img class="level" src="/public/img/level/50x50/2.png">
+    <p class="false">태산몽키</p>
+        <ul class="user_menu" id="user_menu_1743660039-0psk9un537629791b5bc69dc1bc3edbf23cf6c79">
+      <li>태산몽키</li>
+      <li onclick="clickUserMenu.user_home('0psk9un537629791b5bc69dc1bc3edbf23cf6c79')">유저홈</li>
+      
+      <li onclick="add_friend(this,'0psk9un537629791b5bc69dc1bc3edbf23cf6c79');" action="add">구독하기</li>
+      
+      
+      <li onclick="popup_ntalk('0psk9un537629791b5bc69dc1bc3edbf23cf6c79', '태산몽키')">엔톡 신청</li>
+            <li onclick="add_bad_friend_popup('태산몽키')">차단</li>
+      <li onclick="open_popup('/helpdesk/report.popup.php?type=openChat&amp;id=0psk9un537629791b5bc69dc1bc3edbf23cf6c79&amp;channel=lottery', 'report', '383', '455');">
+        신고
+      </li>
+    </ul>
+  </div>
+  <div class="chat_msg ">
+    <span style="font-weight:normal;">☘</span>️1등 픽스터<span style="font-weight:normal;">☘</span>️확실한수익<span style="font-weight:normal;">☘</span>️엔톡&amp;방입장<span style="font-weight:normal;">☘</span>️
+      </div>
+  </div>
+
+  <div class="item chat_item" data-type="MESSAGE" data-user_id="rm7xoh963bb5cf868c72e99a5577546ffa269413" data-time="1743660043">
+    <div class="chat_user" onclick="handleUserMenu('1743660043-rm7xoh963bb5cf868c72e99a5577546ffa269413')">
+    <img class="level" src="/public/img/level/50x50/1.png">
+    <p class="false">돌돔1</p>
+        <ul class="user_menu" id="user_menu_1743660043-rm7xoh963bb5cf868c72e99a5577546ffa269413">
+      <li>돌돔1</li>
+      <li onclick="clickUserMenu.user_home('rm7xoh963bb5cf868c72e99a5577546ffa269413')">유저홈</li>
+      
+      <li onclick="add_friend(this,'rm7xoh963bb5cf868c72e99a5577546ffa269413');" action="add">구독하기</li>
+      
+      
+      <li onclick="clickUserMenu.family('7546f96b111738580659c21eba11d756')">가족방</li>
+      
+      <li onclick="popup_ntalk('rm7xoh963bb5cf868c72e99a5577546ffa269413', '돌돔1')">엔톡 신청</li>
+            <li onclick="add_bad_friend_popup('돌돔1')">차단</li>
+      <li onclick="open_popup('/helpdesk/report.popup.php?type=openChat&amp;id=rm7xoh963bb5cf868c72e99a5577546ffa269413&amp;channel=lottery', 'report', '383', '455');">
+        신고
+      </li>
+    </ul>
+  </div>
+  <div class="chat_msg ">
+    24시  복구부터 수익까지VVIP 가족방 안내 엔톡&amp;방입장<span style="font-weight:normal;">⭐</span>
+      </div>
+  </div>
+
+  <div class="item notify_admin" data-type="NOTICE" data-user_id="manager_captain" data-time="1743660120">
+    <img class="level" src="/public/img/level/50x50/admin.png">
+    <span>[경고] 유저에 대한 근거 없는 저격 신고 및 비방은 패널티 부여됩니다.</span>
+      </div>
+
+  <div class="item notify_admin" data-type="NOTICE" data-user_id="manager_captain" data-time="1743660180">
+    <img class="level" src="/public/img/level/50x50/admin.png">
+    <span>[도배 규정] 동일 채팅 3회 이상 연속 입력 / 내용은 상이하나 동일인이 4회 이상 연속 입력</span>
+      </div>
+</div>
+
+  <div class="notice_write">
+    <form name="fnotify_admin" method="post" onsubmit="return submit_message(this);">
+      <input type="text" id="notify_inputbox" autocomplete="off" class="notify_inputbox" name="message" disabled="" placeholder="로그인 후 이용 가능합니다.">
+      <button type="submit" disabled="">
+        <img src="/public/img/open_chat/icon_submit_w.svg">
+      </button>
+    </form>
+  </div>
+</div>
+
+<!-- FREEZE TEMPLATE-->
+<script id="freeze-template" type="text/template">
+  [% if(state == "true") { %]
+  <div class="freeze_render">
+    <img src="/cheditor/icons/dosa_v2/huk.png" style="padding-left:75px" height="150px" width="150px"/>
+    <div style="margin: 15px auto;"><strong>운영자가 채팅창을 얼렸습니다.</strong></div>
+  </div>
+  [% } else { %]
+  <div class="freeze_render">
+    <img src="/cheditor/icons/emoticon_v1/frenzy.png" style="padding-left:75px" height="150px" width="150px"/>
+    <div style="margin: 15px auto;"><strong>운영자가 채팅창을 녹였습니다.</strong></div>
+  </div>
+  [% } %]
+</script>
+
+<!-- MESSAGE TEMPLATE -->
+<script id="message-template" type="text/template">
+  <div class="item chat_item" data-type='[%= data.type %]' data-user_id='[%= data.user.user_id %]'
+       data-time='[%= data.time %]'>
+    <div class="chat_user"
+         [% if(data.user.user_id==
+    '') { %]
+    onClick="clickUserMenu.user_home('[%= data.user.user_id %]')"
+    [% } else { %]
+    onClick="handleUserMenu('[%= data.time %]-[%= data.user.user_id %]')"
+    [% } %]
+    >
+    <img class="level" src="[%= getImageSource(data.user.user_id, data.user.user_level) %]"/>
+    <p class="[%= data.user.user_extend_style_class %]">[%= data.user.user_nick %]</p>
+        <ul class="user_menu" id="[%= 'user_menu_' + data.time + '-' + data.user.user_id %]">
+      <li>[%= data.user.user_nick %]</li>
+      <li onClick="clickUserMenu.user_home('[%= data.user.user_id %]')">유저홈</li>
+      [% if (listGood.indexOf(data.user.user_id) != -1) { %]
+      <li onclick="add_friend(this,'[%= data.user.user_id %]');" action="remove">구독중단하기</li>
+      [% } else { %]
+      <li onclick="add_friend(this,'[%= data.user.user_id %]');" action="add">구독하기</li>
+      [% } %]
+      [% if (data.user.family_id) { %]
+      <li onClick="clickUserMenu.family('[%= data.user.family_id %]')">가족방</li>
+      [% } %]
+      <li onclick="popup_ntalk('[%= data.user.user_id %]', '[%= data.user.user_nick %]')">엔톡 신청</li>
+            <li onClick="add_bad_friend_popup('[%= data.user.user_nick %]')">차단</li>
+      <li onclick="open_popup('/helpdesk/report.popup.php?type=openChat&id=[%= data.user.user_id %]&channel=lottery', 'report', '383', '455');">
+        신고
+      </li>
+    </ul>
+  </div>
+  <div class="chat_msg [%= data.message.decorColor %]">
+    [%= data.message.description %]
+      </div>
+  </div>
+</script>
+
+<!-- NOTICE TEMPLATE -->
+<script id="notice-template" type="text/template">
+  <div class="item notify_admin" data-type='[%= data.type %]' data-user_id='[%= data.user.user_id %]'
+       data-time='[%= data.time %]'>
+    <img class="level" src="/public/img/level/50x50/admin.png"/>
+    <span>[%= data.message.description %]</span>
+      </div>
+</script>
+
+<!-- NOTICETEMP TEMPLATE -->
+<script id="noticetemp-template" type="text/template">
+  <div class="item notify_admin" data-type='[%= data.type %]' data-user_id='[%= data.user.user_id %]'
+       data-time='[%= data.time %]'>
+    <img class="level" src="/public/img/level/50x50/admin.png"/>
+    <span>[%= data.message.description %]</span>
+  </div>
+</script>
+
+<!-- RANK TEMPLATE -->
+<script id="rank-template" type="text/template">
+  <div class="item rank_info" onClick="clickUserMenu.tipster('[%= data.user.user_id %]')">
+    <span>[%= data.message.description %]</span>
+    <div class="sender">
+      <img class="level" src="[%= getImageSource(data.user.user_id, data.user.user_level) %]"/>
+      [% if (data.user.family_id) { %]
+      <p>[[%= data.user.family_name %]]</p>
+      [% } %]
+      <p>[%= data.user.user_nick %]</p>
+    </div>
+  </div>
+</script>
+
+<!-- STREAK EVENT TEMPLATE -->
+<script id="streak-event-template" type="text/template">
+  <div class="ani_item streak_event"
+       onclick="openPopupWithOptions('/nchatting/room.php?channel_id=[%= data.channel_id %]', 'room_chat', {'width': 1320, 'height': 800, 'resizable': 'no'});">
+    <div class="ani_box">
+      <img src="/public/img/open_chat/streak_event.png" alt="럭키서포터즈 애니메이션">
+      <div class="streak_cnt"><span>[%=data.streak%]</span></div>
+      <div class="star_cnt"><span>[%=data.reward%]</span></div>
+    </div>
+    <div class="receiver">
+      <p class="to">To.</p>
+      <img class="level" src="[%= getImageSource(data.event_win_mb.mb_id, data.event_win_mb.mb_level) %]"/>
+      <p>[%= data.event_win_mb.mb_nick %]</p>
+
+    </div>
+    <div class="sender_info">
+      <div>
+        <img class="level" src="[%= getImageSource(data.user.mb_id, data.user.mb_level) %]"/>
+        <p>[%= data.user.mb_nick %]</p>
+      </div>
+      <div>"[%=data.channel_title%]"</div>
+    </div>
+  </div>
+</script>
+
+<!-- STREAK ANIMATION TEMPLATE -->
+<script id="streak-template" type="text/template">
+  <div class="ani_item streak_ani">
+    <div class="ani_box goUserChannel" mbid="[%= user_list[0].user_id %]">
+      <img src=[%= ani %] class="ani_img"/>
+      <div class="str_num_wrap">
+        <img src="/public/img/open_chat/str_num_[%= data.message.streak %].png" class="ani_[%= css %]"/>
+      </div>
+    </div>
+    <div class="ani_user">
+      <div>
+        <p class="highlight">[%= gameType %]</p>
+      </div>
+      <div class="sender_wrap">
+        [% for (var i=0; i < user_list.length; i++) { %]
+        <div class="sender">
+          <img class="level" src="[%= getImageSource(user_list[i].user_id, user_list[i].user_level) %]"/>
+          [% if (user_list[i].family_id) { %]
+          <p onClick="clickUserMenu.family('[%= user_list[i].family_id %]')">[[%= user_list[i].family_name %]]</p>
+          [% } %]
+          <p onCLick="clickUserMenu.user_home('[%= user_list[i].user_id %]')">[%= user_list[i].user_nick %]</p>
+          [% if (user_list[i].room_no) { %]
+          <a aria-haspopup="true" class="chat_link"
+             onclick="openPopupWithOptions('/nchatting/room.php?channel_id=[%= user_list[i].room_no %]', 'room_chat', {'width': 1320, 'height': 800, 'resizable': 'no'});">채팅방</a>
+          [% } %]
+        </div>
+        [% } %]
+      </div>
+    </div>
+  </div>
+</script>
+
+<!-- CANDY ANIMATION TEMPLATE -->
+<script id="candy-template" type="text/template">
+  <div class="ani_item candy_ani">
+    <div class="star_img_wrap">
+      <img src="/public/img/open_chat/star_ani_[%= grade %].gif?v=200916" class="ani_img"/>
+    </div>
+    <div class="star_cnt">
+      <p class="outer_text">[%= data.message.count %]개</p>
+      <p class="inner_text">[%= data.message.count %]개</p>
+    </div>
+    <div class="ani_user">
+      <div class="sender highlight">
+        <p>To.</p>
+        <img class="level" src="[%= getImageSource(data.message.user_id, data.message.user_level) %]"/>
+        [% if (data.message.family_id) { %]
+        <p onClick="clickUserMenu.family('[%= data.message.family_id %]')">[[%= data.message.family_name %]]</p>
+        [% } %]
+        <p onCLick="clickUserMenu.user_home('[%= data.message.user_id %]')">[%= data.message.user_nick %]</p>
+      </div>
+      <div class="sender">
+        [% if (data.user.family_id) { %]
+        <p onClick="clickUserMenu.family('[%= data.user.family_id %]')">[[%= data.user.family_name %]]</p>
+        [% } %]
+        <p onCLick="clickUserMenu.user_home('[%= data.user.user_id %]')">[%= data.user.user_nick %]</p>
+      </div>
+      <p class="candy_msg">[%= data.message.description %]</p>
+    </div>
+  </div>
+</script>
+
+<!-- CANDY STICKER ANIMATION TEMPLATE -->
+<script id="candy-sticker-template" type="text/template">
+  <div class="ani_item star_sticker">
+    [% if (level < 10 ) { %]
+    <div class="simple_box">
+      <img src="/public/img/nchat/sticker/star_sticker_[%= level %].png"/>
+    </div>
+    [% } else { %]
+    <div class="ani_box">
+      <img src="/public/img/nchat/sticker/star_sticker_[%= level %].gif"/>
+    </div>
+    [% } %]
+    <div class="sender_wrap">
+      <div class="sender highlight">
+        <p>To.</p>
+        <img class="level" src="[%= getImageSource(data.message.user_id, data.message.user_level) %]"/>
+        [% if (data.message.family_id) { %]
+        <p onClick="clickUserMenu.family('[%= data.message.family_id %]')">[[%= data.message.family_name %]]</p>
+        [% } %]
+        <p onCLick="clickUserMenu.user_home('[%= data.message.user_id %]')">[%= data.message.user_nick %]</p>
+      </div>
+      <div class="sender">
+        [% if (data.user.family_id) { %]
+        <p onClick="clickUserMenu.family('[%= data.user.family_id %]')">[[%= data.user.family_name %]]</p>
+        [% } %]
+        <p onCLick="clickUserMenu.user_home('[%= data.user.user_id %]')">[%= data.user.user_nick %]</p>
+      </div>
+    </div>
+  </div>
+</script>
+
+<!-- CREATE ROOM TEMPLATE -->
+<script id="create-room-template" type="text/template">
+  <div class="item create_room">
+    [% if (data.user.family_id) { %]
+    <span>[[%= data.user.family_name %]]</span>
+    [% } %]
+    <span onClick="clickUserMenu.tipster('[%= data.user.user_id %]')">[%= data.user.user_nick %]</span>님이
+    ＂<span class="room_title">[%= data.message.description %]</span>＂을 개설하였습니다.
+    <a href="javascript:;" class="room_join_btn"
+       onclick="openPopupWithOptions('/nchatting/room.php?channel_id=[%= data.message.channel_id %]', 'room_chat', {'width': 1320, 'height': 800, 'resizable': 'no'});">[입장하기]</a>
+  </div>
+</script>
+
+<!-- ELSE EVENT TEMPLATE -->
+<script id="event-template" type="text/template">
+  [% if (data.type== 'BEST_FAMILY') { %]
+  <div class="ani_item else_event best_fam_msg">
+    <img src="/public/img/open_chat/BEST_FAMILY.png?v=08"/>
+    <div class="sender">
+      <img class="level" src="[%= getImageSource(data.user.user_id, data.user.user_level) %]"
+           onerror="this.src='/public/img/fam/default_31x31.png'" width="31" height="31"/>
+      <p>[[%= data.user.family_name %]]</p>
+      <p>[%= data.user.user_nick %]</p>
+    </div>
+    [% if (data.message.description !== '') { %]
+    <div class="description">
+      <img src="/public/img/open_chat/quote_l.svg"/>
+      <p>[%= data.message.description %]</p>
+      <img src="/public/img/open_chat/quote_r.svg"/>
+    </div>
+    [% } %]
+    <div class="button_wrap">
+      <a onClick="clickUserMenu.family('[%= data.user.family_id %]')" target="_blank">
+        가족방 바로가기
+      </a>
+      [% if (chat_room!== "") { %]
+      <a href="javascript:open_user_channel('/nchatting/room.php?channel_id=[%= chat_room %]');" aria-haspopup="true">
+        가족방장 채팅방
+      </a>
+      [% } %]
+    </div>
+  </div>
+  [% } else { %]
+  <div class="ani_item else_event"
+       [% if (data.type== 'BEST_PICKSTER') { %]
+  onClick="clickUserMenu.user_home('[%= data.user.user_id %]')"
+  [% } else { %]
+  onClick="clickUserMenu.family('[%= data.user.family_id %]')"
+  [% } %]>
+  <img src="[%= '/public/img/open_chat/' +  data.type + '.png' %]"/>
+  <div class="sender">
+    <img class="level" src="[%= getImageSource(data.user.user_id, data.user.user_level) %]"/>
+    [% if (data.user.family_id) { %]
+    <p>[[%= data.user.family_name %]]</p>
+    [% } %]
+    <p>[%= data.user.user_nick %]</p>
+  </div>
+  [% if (data.message.description) { %]
+  <div class="description">
+    <img src="/public/img/open_chat/quote_l.svg"/>
+    [%= data.message.description %]
+    <img src="/public/img/open_chat/quote_r.svg"/>
+  </div>
+  [% } %]
+  </div>
+  [% } %]
+</script>
+
+<script type="text/javascript">
+  var myParent = parent;
+
+  
+  var listBad = ('').split(',');
+  listBad.shift();
+  var listGood = '';
+  var $message_list = $("#message_list");
+  var $user_count = $("#user_count");
+  var $channel_key = 'open_chat_lottery';
+  var user_menu = '';
+  let is_frozen = '0';
+
+  var prev_msg = '';
+  var send_cnt = 0;
+  var send_limit = false;
+  var ajax_obj = null;
+  var common_error_message = '작업이 실패 하였습니다.';
+  var is_admin = '';
+  var best_pickster_id = '4zq1fxn9bae9dddd953768fceda369371bf93885';
+  var best_fam_master_id = '4zq1fxn9bae9dddd953768fceda369371bf93885';
+
+  const chat_open_time = Date.now();
+
+  function getImageSource(user_id, user_level) {
+    let str = '/public/img/level/50x50/';
+    switch (true) {
+      case (user_id === best_pickster_id && user_id === best_fam_master_id):
+        str += "best_double.png";
+        break;
+      case (user_id === best_fam_master_id):
+        str += "best_fam.png";
+        break;
+      case (user_id === best_pickster_id):
+        str += "best.png";
+        break;
+      default:
+        str += user_level + '.png';
+        break;
+    }
+
+    return str;
+  }
+
+  // 이슈 이미지 클릭시
+  $(document).on('click', '.goUserChannel', async function () {
+    const mb_id = $(this).attr("mbid");
+
+    try {
+      const channel = await parent.NCHAT.gClient.getMyActiveChannel(mb_id);
+      if (channel && channel.channel_id) {
+        open_user_channel("/nchatting/room.php?channel_id=" + channel.channel_id);
+      } else {
+        window.open("/user/home.php?mb_id=" + mb_id);
+      }
+    } catch (e) {
+      window.open("/user/home.php?mb_id=" + mb_id);
+    }
+  });
+
+  $(document).mouseup(function (e) {
+    var refUserMenu = $('#user_menu_' + user_menu);
+    var refChatManager = $('#chat_message_setting > .setting_icon');
+
+    if (refUserMenu.has(e.target).length === 0) refUserMenu.hide();
+    if (refChatManager.attr('data-id') === 'close' &&
+      $(refChatManager).has(e.target).length === 0) {
+      handleSettingPopup(refChatManager, 'close')
+    }
+  });
+
+  function handleUserMenu(msgId = '') {
+    $('#user_menu' + '_' + msgId).show();
+    if (msgId != user_menu) $('#user_menu_' + user_menu).hide();
+    if ($('#user_menu_' + msgId).offset().top > 320) scrollBottomChat();
+
+    user_menu = msgId;
+  }
+
+  function handleSettingPopup(ref, dataId) {
+    var type = dataId || $(ref).attr('data-id');
+    var iconRef = '#chat_message_setting > .setting_icon > img';
+    if (type === 'open') {
+      $(ref).addClass('active_icon');
+      $(ref).attr('data-id', 'close');
+      $(iconRef).attr('src', '/public/img/open_chat/icon_close_w.svg');
+      $('#chat_message_setting > .setting_menu').css('display', 'block');
+    } else {
+      $(ref).removeClass('active_icon');
+      $(ref).attr('data-id', 'open');
+      $(iconRef).attr('src', '/public/img/open_chat/icon_setting_w.svg');
+      $('#chat_message_setting > .setting_menu').css('display', 'none');
+    }
+  }
+
+  $(function () {
+    makeRenderOpenChatByOrder().then().catch();
+
+    async function makeRenderOpenChatByOrder() {
+      
+            try {
+        await MPQ.open_chat({'code': 200, type: 'issue', message: JSON.parse(`{"type":"NOTICE","history_key":"open_chat_lottery","user":{"user_id":"manager_captain","user_nick":"[NTRY]CAPTAIN","user_level":"255","user_degree":"1","user_extend_style_class":false,"family_id":"","family_name":"","family_extend_style_class":""},"message":{"description":"[\uc54c\ub9bc] \uc720\uc800\ud648\uc5d0\uc11c \ucc28\ub2e8\uae30\ub2a5\uc744 \uc774\uc6a9\ud558\uc2dc\uba74 \ud574\ub2f9\uc720\uc800\uc758 \uc624\ud508\ucc44\ud305 \ub0b4\uc6a9\uc744 \uc228\uae38 \uc218 \uc788\uc2b5\ub2c8\ub2e4."},"time":1743658500}`)});
+      } catch (e) {}
+            try {
+        await MPQ.open_chat({'code': 200, type: 'issue', message: JSON.parse(`{"type":"NOTICE","history_key":"open_chat_lottery","user":{"user_id":"manager_captain","user_nick":"[NTRY]CAPTAIN","user_level":"255","user_degree":"1","user_extend_style_class":false,"family_id":"","family_name":"","family_extend_style_class":""},"message":{"description":"[\uc54c\ub9bc] \ud504\ub85c\uc81d\ud2b8 \ubc43\uc9c0 \ubbf8\ubcf4\uc720 \uc0c1\ud0dc\uc5d0\uc11c \ud504\uc81d \uc131\uacf5\uc774\ub77c\ub294 \ucc44\ud305 \ub0b4\uc6a9\uc740 \ucc44\uae08 \ub300\uc0c1\uc785\ub2c8\ub2e4."},"time":1743658560}`)});
+      } catch (e) {}
+            try {
+        await MPQ.open_chat({'code': 200, type: 'issue', message: JSON.parse(`{"type":"TOP_FAMILY","history_key":"open_chat_lottery","user":{"user_id":"5mn6v1yi31ae4a7d34a0c21d0d3fa950263412f1","user_nick":"\ud53d\uc2a4\ud130\ubca0\ud14c\ub791","user_level":"9","user_degree":"1","user_extend_style_class":false,"family_id":"be016345eb33a806afa08b537e8a9932","family_name":"\ubc30\ud14c\ub791","family_extend_style_class":"fam_ranker"},"message":{"description":"\uc5d4\ud2b8\ub9ac 1\uc704 \uac00\uc871\ubc29 \uc5d4\ud1a1\ud655\uc778"},"time":1743658800}`)});
+      } catch (e) {}
+            try {
+        await MPQ.open_chat({'code': 200, type: 'issue', message: JSON.parse(`{"history_key":"open_chat_lottery","type":"MESSAGE","user":{"user_id":"rm7xoh963bb5cf868c72e99a5577546ffa269413","user_nick":"\ub3cc\ub3d41","user_level":"1","user_extend_style_class":false,"family_id":"7546f96b111738580659c21eba11d756","family_name":"\uc2a4\ud0c0v","family_extend_style_class":""},"message":{"description":"24\uc2dc  \ubcf5\uad6c\ubd80\ud130 \uc218\uc775\uae4c\uc9c0VVIP \uac00\uc871\ubc29 \uc548\ub0b4 \uc5d4\ud1a1&\ubc29\uc785\uc7a5\u2b50","decorColor":null},"time":1743658800}`)});
+      } catch (e) {}
+            try {
+        await MPQ.open_chat({'code': 200, type: 'issue', message: JSON.parse(`{"history_key":"open_chat_lottery","type":"MESSAGE","user":{"user_id":"0psk9un537629791b5bc69dc1bc3edbf23cf6c79","user_nick":"\ud0dc\uc0b0\ubabd\ud0a4","user_level":"2","user_extend_style_class":false,"family_id":null,"family_name":null,"family_extend_style_class":""},"message":{"description":"\u2618\ufe0f1\ub4f1 \ud53d\uc2a4\ud130\u2618\ufe0f\ud655\uc2e4\ud55c\uc218\uc775\u2618\ufe0f\uc5d4\ud1a1&\ubc29\uc785\uc7a5\u2618\ufe0f","decorColor":null},"time":1743658829}`)});
+      } catch (e) {}
+            try {
+        await MPQ.open_chat({'code': 200, type: 'issue', message: JSON.parse(`{"type":"NOTICE","history_key":"open_chat_lottery","user":{"user_id":"manager_captain","user_nick":"[NTRY]CAPTAIN","user_level":"255","user_degree":"1","user_extend_style_class":false,"family_id":"","family_name":"","family_extend_style_class":""},"message":{"description":"[\uacbd\uace0] \uc720\uc800\uc5d0 \ub300\ud55c \uadfc\uac70 \uc5c6\ub294 \uc800\uaca9 \uc2e0\uace0 \ubc0f \ube44\ubc29\uc740 \ud328\ub110\ud2f0 \ubd80\uc5ec\ub429\ub2c8\ub2e4."},"time":1743658920}`)});
+      } catch (e) {}
+            try {
+        await MPQ.open_chat({'code': 200, type: 'issue', message: JSON.parse(`{"type":"NOTICE","history_key":"open_chat_lottery","user":{"user_id":"manager_captain","user_nick":"[NTRY]CAPTAIN","user_level":"255","user_degree":"1","user_extend_style_class":false,"family_id":"","family_name":"","family_extend_style_class":""},"message":{"description":"[\ub3c4\ubc30 \uaddc\uc815] \ub3d9\uc77c \ucc44\ud305 3\ud68c \uc774\uc0c1 \uc5f0\uc18d \uc785\ub825 \/ \ub0b4\uc6a9\uc740 \uc0c1\uc774\ud558\ub098 \ub3d9\uc77c\uc778\uc774 4\ud68c \uc774\uc0c1 \uc5f0\uc18d \uc785\ub825"},"time":1743658980}`)});
+      } catch (e) {}
+            try {
+        await MPQ.open_chat({'code': 200, type: 'issue', message: JSON.parse(`{"history_key":"open_chat_lottery","type":"MESSAGE","user":{"user_id":"0psk9un537629791b5bc69dc1bc3edbf23cf6c79","user_nick":"\ud0dc\uc0b0\ubabd\ud0a4","user_level":"2","user_extend_style_class":false,"family_id":null,"family_name":null,"family_extend_style_class":""},"message":{"description":"\u2618\ufe0f1\ub4f1 \ud53d\uc2a4\ud130\u2618\ufe0f\ud655\uc2e4\ud55c\uc218\uc775\u2618\ufe0f\uc5d4\ud1a1&\ubc29\uc785\uc7a5\u2618\ufe0f","decorColor":null},"time":1743658988}`)});
+      } catch (e) {}
+            try {
+        await MPQ.open_chat({'code': 200, type: 'issue', message: JSON.parse(`{"type":"NOTICE","history_key":"open_chat_lottery","user":{"user_id":"manager_captain","user_nick":"[NTRY]CAPTAIN","user_level":"255","user_degree":"1","user_extend_style_class":false,"family_id":"","family_name":"","family_extend_style_class":""},"message":{"description":"[\uc54c\ub9bc] \uc720\uc800\ud648\uc5d0\uc11c \ucc28\ub2e8\uae30\ub2a5\uc744 \uc774\uc6a9\ud558\uc2dc\uba74 \ud574\ub2f9\uc720\uc800\uc758 \uc624\ud508\ucc44\ud305 \ub0b4\uc6a9\uc744 \uc228\uae38 \uc218 \uc788\uc2b5\ub2c8\ub2e4."},"time":1743659100}`)});
+      } catch (e) {}
+            try {
+        await MPQ.open_chat({'code': 200, type: 'issue', message: JSON.parse(`{"type":"NOTICE","history_key":"open_chat_lottery","user":{"user_id":"manager_captain","user_nick":"[NTRY]CAPTAIN","user_level":"255","user_degree":"1","user_extend_style_class":false,"family_id":"","family_name":"","family_extend_style_class":""},"message":{"description":"[\uc54c\ub9bc] \ud504\ub85c\uc81d\ud2b8 \ubc43\uc9c0 \ubbf8\ubcf4\uc720 \uc0c1\ud0dc\uc5d0\uc11c \ud504\uc81d \uc131\uacf5\uc774\ub77c\ub294 \ucc44\ud305 \ub0b4\uc6a9\uc740 \ucc44\uae08 \ub300\uc0c1\uc785\ub2c8\ub2e4."},"time":1743659160}`)});
+      } catch (e) {}
+            try {
+        await MPQ.open_chat({'code': 200, type: 'issue', message: JSON.parse(`{"type":"NOTICE","history_key":"open_chat_lottery","user":{"user_id":"manager_captain","user_nick":"[NTRY]CAPTAIN","user_level":"255","user_degree":"1","user_extend_style_class":false,"family_id":"","family_name":"","family_extend_style_class":""},"message":{"description":"[\uacbd\uace0] \uc720\uc800\uc5d0 \ub300\ud55c \uadfc\uac70 \uc5c6\ub294 \uc800\uaca9 \uc2e0\uace0 \ubc0f \ube44\ubc29\uc740 \ud328\ub110\ud2f0 \ubd80\uc5ec\ub429\ub2c8\ub2e4."},"time":1743659520}`)});
+      } catch (e) {}
+            try {
+        await MPQ.open_chat({'code': 200, type: 'issue', message: JSON.parse(`{"type":"NOTICE","history_key":"open_chat_lottery","user":{"user_id":"manager_captain","user_nick":"[NTRY]CAPTAIN","user_level":"255","user_degree":"1","user_extend_style_class":false,"family_id":"","family_name":"","family_extend_style_class":""},"message":{"description":"[\ub3c4\ubc30 \uaddc\uc815] \ub3d9\uc77c \ucc44\ud305 3\ud68c \uc774\uc0c1 \uc5f0\uc18d \uc785\ub825 \/ \ub0b4\uc6a9\uc740 \uc0c1\uc774\ud558\ub098 \ub3d9\uc77c\uc778\uc774 4\ud68c \uc774\uc0c1 \uc5f0\uc18d \uc785\ub825"},"time":1743659580}`)});
+      } catch (e) {}
+            try {
+        await MPQ.open_chat({'code': 200, type: 'issue', message: JSON.parse(`{"type":"NOTICE","history_key":"open_chat_lottery","user":{"user_id":"manager_captain","user_nick":"[NTRY]CAPTAIN","user_level":"255","user_degree":"1","user_extend_style_class":false,"family_id":"","family_name":"","family_extend_style_class":""},"message":{"description":"[\uc54c\ub9bc] \uc720\uc800\ud648\uc5d0\uc11c \ucc28\ub2e8\uae30\ub2a5\uc744 \uc774\uc6a9\ud558\uc2dc\uba74 \ud574\ub2f9\uc720\uc800\uc758 \uc624\ud508\ucc44\ud305 \ub0b4\uc6a9\uc744 \uc228\uae38 \uc218 \uc788\uc2b5\ub2c8\ub2e4."},"time":1743659700}`)});
+      } catch (e) {}
+            try {
+        await MPQ.open_chat({'code': 200, type: 'issue', message: JSON.parse(`{"history_key":"open_chat_lottery","type":"MESSAGE","user":{"user_id":"rm7xoh963bb5cf868c72e99a5577546ffa269413","user_nick":"\ub3cc\ub3d41","user_level":"1","user_extend_style_class":false,"family_id":"7546f96b111738580659c21eba11d756","family_name":"\uc2a4\ud0c0v","family_extend_style_class":""},"message":{"description":"24\uc2dc  \ubcf5\uad6c\ubd80\ud130 \uc218\uc775\uae4c\uc9c0VVIP \uac00\uc871\ubc29 \uc548\ub0b4 \uc5d4\ud1a1&\ubc29\uc785\uc7a5\u2b50","decorColor":null},"time":1743659753}`)});
+      } catch (e) {}
+            try {
+        await MPQ.open_chat({'code': 200, type: 'issue', message: JSON.parse(`{"type":"NOTICE","history_key":"open_chat_lottery","user":{"user_id":"manager_captain","user_nick":"[NTRY]CAPTAIN","user_level":"255","user_degree":"1","user_extend_style_class":false,"family_id":"","family_name":"","family_extend_style_class":""},"message":{"description":"[\uc54c\ub9bc] \ud504\ub85c\uc81d\ud2b8 \ubc43\uc9c0 \ubbf8\ubcf4\uc720 \uc0c1\ud0dc\uc5d0\uc11c \ud504\uc81d \uc131\uacf5\uc774\ub77c\ub294 \ucc44\ud305 \ub0b4\uc6a9\uc740 \ucc44\uae08 \ub300\uc0c1\uc785\ub2c8\ub2e4."},"time":1743659760}`)});
+      } catch (e) {}
+            try {
+        await MPQ.open_chat({'code': 200, type: 'issue', message: JSON.parse(`{"history_key":"open_chat_lottery","type":"BEST_PICKSTER","user":{"user_id":"4zq1fxn9bae9dddd953768fceda369371bf93885","user_nick":"\ub098\ub2e4\uc7a5\ubbf8","user_level":"best","user_degree":"best","user_extend_style_class":"best","family_id":"989497e741aa2fd2fe7c3809a97ef845","family_name":"\ub098\ub2e4\ud338","family_extend_style_class":"best_fam"},"message":{"description":"24\uc2dc\uac04 \ud65c\ubc1c\ud55c \uc870\uac74\uc5c6\ub294 \uac00\uc871\ubc29 \uc5d4\ud1a1 \ubb38\uc758 \u2764"},"time":1743660000}`)});
+      } catch (e) {}
+            try {
+        await MPQ.open_chat({'code': 200, type: 'issue', message: JSON.parse(`{"history_key":"open_chat_lottery","type":"MESSAGE","user":{"user_id":"0psk9un537629791b5bc69dc1bc3edbf23cf6c79","user_nick":"\ud0dc\uc0b0\ubabd\ud0a4","user_level":"2","user_extend_style_class":false,"family_id":null,"family_name":null,"family_extend_style_class":""},"message":{"description":"\u2618\ufe0f1\ub4f1 \ud53d\uc2a4\ud130\u2618\ufe0f\ud655\uc2e4\ud55c\uc218\uc775\u2618\ufe0f\uc5d4\ud1a1&\ubc29\uc785\uc7a5\u2618\ufe0f","decorColor":null},"time":1743660039}`)});
+      } catch (e) {}
+            try {
+        await MPQ.open_chat({'code': 200, type: 'issue', message: JSON.parse(`{"history_key":"open_chat_lottery","type":"MESSAGE","user":{"user_id":"rm7xoh963bb5cf868c72e99a5577546ffa269413","user_nick":"\ub3cc\ub3d41","user_level":"1","user_extend_style_class":false,"family_id":"7546f96b111738580659c21eba11d756","family_name":"\uc2a4\ud0c0v","family_extend_style_class":""},"message":{"description":"24\uc2dc  \ubcf5\uad6c\ubd80\ud130 \uc218\uc775\uae4c\uc9c0VVIP \uac00\uc871\ubc29 \uc548\ub0b4 \uc5d4\ud1a1&\ubc29\uc785\uc7a5\u2b50","decorColor":null},"time":1743660043}`)});
+      } catch (e) {}
+            try {
+        await MPQ.open_chat({'code': 200, type: 'issue', message: JSON.parse(`{"type":"NOTICE","history_key":"open_chat_lottery","user":{"user_id":"manager_captain","user_nick":"[NTRY]CAPTAIN","user_level":"255","user_degree":"1","user_extend_style_class":false,"family_id":"","family_name":"","family_extend_style_class":""},"message":{"description":"[\uacbd\uace0] \uc720\uc800\uc5d0 \ub300\ud55c \uadfc\uac70 \uc5c6\ub294 \uc800\uaca9 \uc2e0\uace0 \ubc0f \ube44\ubc29\uc740 \ud328\ub110\ud2f0 \ubd80\uc5ec\ub429\ub2c8\ub2e4."},"time":1743660120}`)});
+      } catch (e) {}
+            try {
+        await MPQ.open_chat({'code': 200, type: 'issue', message: JSON.parse(`{"type":"NOTICE","history_key":"open_chat_lottery","user":{"user_id":"manager_captain","user_nick":"[NTRY]CAPTAIN","user_level":"255","user_degree":"1","user_extend_style_class":false,"family_id":"","family_name":"","family_extend_style_class":""},"message":{"description":"[\ub3c4\ubc30 \uaddc\uc815] \ub3d9\uc77c \ucc44\ud305 3\ud68c \uc774\uc0c1 \uc5f0\uc18d \uc785\ub825 \/ \ub0b4\uc6a9\uc740 \uc0c1\uc774\ud558\ub098 \ub3d9\uc77c\uc778\uc774 4\ud68c \uc774\uc0c1 \uc5f0\uc18d \uc785\ub825"},"time":1743660180}`)});
+      } catch (e) {}
+          }
+
+    $('#message_list').find('.img_loading').hide();
+
+    var url = window.location.href;
+    var newWindow = url.split('?iframe=');
+    var type = url.split('channel=')[1];
+
+    var title = {
+      lottery: 'EOS 채팅',
+      fx: 'FX게임 채팅',
+      sports: '미니게임 채팅',
+    };
+    if (!newWindow[1]) {
+      $('#chat_title').show();
+      $('#chat_title').html(title[type]);
+      $('#open_chat_guide').css('top', '60px');
+      $message_list.scrollTop($message_list.scrollTop() + 50);
+    }
+
+    // HANDLING INPUT BOX
+    $('#notify_inputbox').keydown(function (event) {
+      // ESC키는 포커스 잃음
+      if (event.keyCode === 27) {
+        $(this).blur();
+        parent.focus();
+        return;
+      }
+      // keyup 사용시 랙 현상 발생, keypress는 현재값 못 받아옴, 타이머 사용 시 keydown 으로 사용 가능
+      setTimeout(() => {
+        var trimed = this.value.trim();
+        if (trimed === '') {
+          $(this).siblings('button').prop('disabled', true);
+        } else {
+          $(this).siblings('button').prop('disabled', false);
+          // 개행 시 욕 필터
+          /* if (!filterWords(trimed)) {
+            $(this).val('');
+            $(this).siblings('button').prop('disabled', true);
+          } */
+          if ('1') validateInput(trimed, $(this));
+        }
+      }, 1);
+    });
+
+    // CLOSE POPUP WHEN CLICK USER MENU ITEMS
+    $('.user_menu li').click(function () {
+      $('#user_menu' + '_' + user_menu).hide();
+    });
+
+    $message_list.scroll(function () {
+      if ($message_list.scrollTop() + $message_list.innerHeight() + 532 >= $message_list[0].scrollHeight) {
+        $('#chat_message_scroll').hide();
+      } else {
+        $('#chat_message_scroll').show();
+      }
+    })
+  });
+
+  
+  function submit_message(f) {
+    var decorColor = '';
+    let nickColor = ''
+    var inputBox = $('#notify_inputbox');
+    var param = {};
+    param.code = 'message';
+    param.message = f.message.value;
+    param.channel_key = $channel_key;
+    param.isAdmin = is_admin
+    param.isFrozen = is_frozen
+    initChat = false;
+
+    // 내가 채팅 메세지 전송 했을때 스크롤 최하단 으로 이동 시킴
+    scrollBottomChat();
+
+    // TO FILTER RESTRICTED WORDS
+    if (!filterWords(param.message)) {
+      // 욕설 작성 해도 삭제는 되지 않음
+      //inputBox.siblings('button').prop('disabled', true);
+      //inputBox.val("");
+      return false;
+    }
+    param.message = param.message.replace(/\\/gi, "");
+    param.message = param.message.replace(/`/gi, "");
+    var validation = validateInput(param.message, inputBox);
+    if (!validation) return false;
+
+    // validation 체크 완료 후 전송 즉시 input 창 리셋
+    inputBox.siblings('button').prop('disabled', true);
+    inputBox.val("");
+
+    // if (prev_msg != '' && prev_msg == param.message) {
+    //     alert('채팅 도배 방지로 이전과 동일한 메세지는 입력할 수 없습니다.');
+    //     return false;
+    // }
+
+    if (param.code == 'notice') {
+      let messageTemp = {
+        history_key: param.channel_key,
+        type: "NOTICE",
+        user: {
+          family_extend_style_class: "",
+          family_id: null,
+          family_name: null,
+          user_extend_style_class: false,
+          user_id: mbid,
+          user_level: "",
+          user_nick: ""
+        },
+        message: {description: param.message},
+        time: parseInt(new Date().getTime() / 1000)
+      };
+      let renderedHtml = new EJS({element: 'noticetemp-template'}).render({data: messageTemp});
+      $('#message_list').append(renderedHtml).scrollTop($('#message_list')[0].scrollHeight);
+
+      var typeArray = [$channel_key];
+      typeArray.forEach(function (item) {
+        param.channel_key = item;
+        ajax_obj = $.post("/open_chat/ajax.php", param, function (data) {
+          if (data.code != '000') {
+            alert(data.message);
+          }
+          ajax_obj = null;
+        }, "json");
+      });
+    } else {
+      send_limit = true;
+      setTimeout(function () {
+        send_limit = false;
+      }, 5000);
+
+      if (send_cnt < 6) send_cnt++;
+
+      // TO PREVENT THE MULTIPLE SIMULTANEOUS SUBMITS
+      if (ajax_obj != null) {
+        return false;
+      }
+
+      let messageTemp = {
+        history_key: param.channel_key,
+        type: "MESSAGE",
+        user: {
+          family_extend_style_class: "",
+          family_id: null,
+          family_name: null,
+          user_extend_style_class: nickColor,
+          user_id: mbid,
+          user_level: "",
+          user_nick: ""
+        },
+        message: {description: param.message, decorColor: decorColor},
+        time: parseInt(new Date().getTime() / 1000)
+      };
+      //console.log(messageTemp);
+      messageTemp.message.description = addSpanToEmojis(messageTemp.message.description);
+      let renderedHtml = new EJS({element: 'message-template'}).render({data: messageTemp});
+      $('#message_list').append(renderedHtml).scrollTop($('#message_list')[0].scrollHeight);
+
+      ajax_obj = $.post("/open_chat/ajax.php", param, function (data) {
+        if (data.code == '000') {
+          prev_msg = param.message;
+          if (send_cnt >= 5 && send_limit && param.code == 'message') {
+            document.getElementById('notify_inputbox').disabled = true;
+            document.getElementById('notify_inputbox').placeholder = "채팅 도배 방지로 5초 후 입력 가능합니다.";
+            send_cnt = 0;
+            setTimeout(function () {
+              document.getElementById('notify_inputbox').disabled = false;
+              document.getElementById('notify_inputbox').placeholder = '메세지를 입력해주세요.(최대 40자)';
+            }, 5000);
+          }
+          ajax_obj = null;
+        } else {
+          if (data.code == '-108' || data.code == '-110') {
+            $('#message_list .item:last-child').remove();
+          }
+          ajax_obj = null;
+          alert(data.message);
+        }
+      }, "json");
+    }
+
+    return false;
+  }
+
+  function textLengthOverCut(txt, len, lastTxt) {
+    if (len == "" || len == null) { // 기본값
+      len = 20;
+    }
+    if (lastTxt == "" || lastTxt == null) { // 기본값
+      lastTxt = "...";
+    }
+    if (txt.length > len) {
+      txt = txt.substr(0, len) + lastTxt;
+    }
+    return txt;
+  }
+
+  function getCookie(cookieName) {
+    cookieName = cookieName + '=';
+    var cookieData = document.cookie;
+    var start = cookieData.indexOf(cookieName);
+    var cookieValue = '';
+    if (start != -1) {
+      start += cookieName.length;
+      var end = cookieData.indexOf(';', start);
+      if (end == -1) end = cookieData.length;
+      cookieValue = cookieData.substring(start, end);
+    }
+    return unescape(cookieValue);
+  }
+
+  // 채팅방 관리 기능
+  var manageChatMessage = {
+    new_window: function () {
+      // 팝업창 닫기 함수
+      handleSettingPopup($('#chat_message_setting > .setting_icon'), 'close');
+
+      open_popup('/open_chat/open_chat_frame.php?channel=lottery', 'lottery', '334', '520');
+    },
+    remove_msg: function () {
+      handleSettingPopup($('#chat_message_setting > .setting_icon'), 'close');
+
+      $('#issue_wrap .item').remove();
+      $('#issue_wrap .ani_item').remove();
+      $('#issue_wrap .clean_chat').show();
+    },
+    smaller: function () {
+      handleSettingPopup($('#chat_message_setting > .setting_icon'), 'close');
+
+      var prevSize = Number($('.setting_menu').attr('data-size'));
+      var size = prevSize === 14 ? 12 : 11;
+
+      $('.notify_admin > span').css('font-size', size);
+      $('.chat_item').css('font-size', size);
+      $('.setting_menu').attr('data-size', size);
+
+      $('#font-bigger').show();
+      if (size === 11) {
+        $('#font-smaller').hide();
+      } else {
+        $('#font-smaller').show();
+      }
+    },
+    bigger: function () {
+      handleSettingPopup($('#chat_message_setting > .setting_icon'), 'close');
+
+      var prevSize = Number($('.setting_menu').attr('data-size'));
+      var size = prevSize === 11 ? 12 : 14;
+
+      $('.notify_admin > span').css('font-size', size);
+      $('.chat_item').css('font-size', size);
+      $('.setting_menu').attr('data-size', size);
+
+      $('#font-smaller').show();
+      if (size === 14) {
+        $('#font-bigger').hide();
+      } else {
+        $('#font-bigger').show();
+      }
+    },
+    reloading: function () {
+      handleSettingPopup($('#chat_message_setting > .setting_icon'), 'close');
+
+      parent.document.location.reload();
+    },
+    frozen: function () {
+      handleSettingPopup($('#chat_message_setting > .setting_icon'), 'close');
+
+      let params = {state: is_frozen};
+      is_frozen = is_frozen == 1 ? 0 : 1;
+      $.post('/open_chat/ajax.php', params, function (data) {
+      }, "json");
+    },
+    autoMessagingOptions: function () {
+      handleSettingPopup($('#chat_message_setting > .setting_icon'), 'close');
+
+      open_popup('/open_chat/open_chat_auto_msg.php', 'smth', '900', '400');
+    },
+    totalClean: function () {
+      let params = {erase_history: true};
+      $.post('/open_chat/ajax.php', params, function (data) {
+        if (data != 'success') {
+          alert(data);
+        }
+      }, "json");
+
+      handleSettingPopup($('#chat_message_setting > .setting_icon'), 'close');
+      $('#issue_wrap .item').remove();
+      $('#issue_wrap .ani_item').remove();
+      $('#issue_wrap .clean_chat').show();
+    }
+  }
+
+  // 사용자 메뉴 관리
+  var clickUserMenu = {
+    user_home: function (mb_id) {
+      parent.document.location.href = "/user/home.php?mb_id=" + mb_id;
+    },
+    family: function (family_id) {
+      parent.document.location.href = "/family/home.php?family_id=" + family_id;
+    },
+    tipster: function (mb_id) {
+      parent.document.location.href = '/tipster/user.php?mb_id=' + mb_id;
+    }
+  };
+
+  /**
+   * 엔톡 대화 신청
+   * @param targetUserId
+   * @param targetUserName
+   * @returns {boolean}
+   */
+  function popup_ntalk(targetUserId, targetUserName) {
+    var url, talkFrame;
+    if (!targetUserId || !targetUserName) {
+      return false;
+    }
+    url = '/ntalk/index.php?mb_id=' + targetUserId;
+    talkFrame = parent.document.getElementById('ntalkFrame');
+
+    if (talkFrame) {
+      talkFrame.src = url;
+      parent.document.getElementById('user_service_talk').click();
+    } else {
+      open_popup(url, targetUserName, '360', '554');
+    }
+
+    return true;
+  }
+
+  /**
+   * 금지어 필터링 (매니저는 제외)
+   * @param value
+   * @returns {boolean}
+   */
+  function filterWords(value) {
+    // 매니저 일때는 제외
+    if (is_admin) return true;
+
+    var lower = value.toLowerCase();
+    // Message filter
+    for (var i = 0, offset; i < filter_words.length; i++) {
+      if ((offset = lower.indexOf(filter_words[i])) === -1) continue;
+      alert("입력하신 [" + filter_words[i] + "] (은)는  금지어입니다.");
+
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * 채팅 입력 필드 validation
+   * @param value
+   * @param input
+   * @returns {boolean}
+   */
+  function validateInput(value, input) {
+            if (value.length > 40) {
+      input.val(value.slice(0, 40));
+      alert('채팅 메세지는 최대 40자 까지만 작성 가능합니다.');
+
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * 채팅 스크롤 최하단으로 이동
+   */
+  function scrollBottomChat() {
+    $message_list.stop().animate({'scrollTop': $message_list[0].scrollHeight});
+    // $message_list.scrollTop($message_list[0].scrollHeight);
+  }
+
+  /**
+   * 오픈챗 규정 on/off
+   */
+  function openGuide() {
+    $('#open_chat_guide').toggleClass('active');
+  }
+
+  /**
+   * 구독하기
+   * @param o
+   * @param fr_id
+   * @returns {boolean}
+   */
+  function add_friend(o, fr_id) {
+        parent.sweet_alert('로그인 후 구독하기 사용이 가능합니다.');
+      }
+</script>
+<script type="text/javascript" src="/public/js/notification-open-chat.js?v=20241211104628"></script>
+<script type="text/javascript" src="/public/js/modernizr-custom.js?v=20241211104628"></script>
+<script type="text/javascript" src="/public/js/message-receiver.js?v=20241211104628"></script>
+<script type="text/javascript" src="/public/js/ejs/ejs_production.js?v=20241211104628"></script>
+<script type="text/javascript" src="/public/js/helpdesk/report.js?v=20241211104628"></script>
+
+
+
+</body></html>
