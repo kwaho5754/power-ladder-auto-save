@@ -21,24 +21,22 @@ sheet = client.open_by_key(spreadsheet_id).worksheet("예측결과")
 # 3. JSON 데이터 가져오기
 url = "https://ntry.com/data/json/games/power_ladder/recent_result.json"
 response = requests.get(url)
-data = response.json()
-
-latest = data[-1]  # 가장 최근 회차 데이터
+data = response.json()  # 딕셔너리 형식
 
 # 4. 한 줄로 저장할 데이터 구성
 row = [
-    latest["reg_date"],
-    latest["date_round"],
-    latest["start_point"],
-    latest["line_count"],
-    latest["odd_even"]
+    data["reg_date"],
+    data["date_round"],
+    data["start_point"],
+    data["line_count"],
+    data["odd_even"]
 ]
 
 # 5. 중복 체크 후 저장
 existing = sheet.col_values(2)  # 회차 (B열)
 
-if str(latest["date_round"]) not in existing:
+if str(data["date_round"]) not in existing:
     sheet.append_row(row)
     print("✅ 저장 완료:", row)
 else:
-    print("⚠️ 이미 저장된 회차입니다:", latest["date_round"])
+    print("⚠️ 이미 저장된 회차입니다:", data["date_round"])
