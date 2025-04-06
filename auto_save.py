@@ -17,7 +17,7 @@ gc = gspread.authorize(credentials)
 spreadsheet = gc.open_by_key("1HXRIbAOEotWONqG3FVT9iub9oWNANs7orkUKjmpqfn4")
 worksheet = spreadsheet.worksheet("예측결과")
 
-# 실시간 결과 JSON 주소 (✅ 최신 회차 정보)
+# 실시간 회차 결과 주소
 url = "https://ntry.com/data/json/games/power_ladder/recent_result.json"
 
 def fetch_latest_result():
@@ -25,7 +25,12 @@ def fetch_latest_result():
         response = requests.get(url)
         response.raise_for_status()
         data = response.json()
-        return data
+
+        if isinstance(data, list) and len(data) > 0:
+            return data[0]  # 가장 최근 회차 1개만 추출
+        else:
+            print("⚠️ JSON 응답이 비어있거나 형식이 다름:", data)
+            return None
     except Exception as e:
         print("❌ 회차 데이터 불러오기 실패:", e)
         return None
@@ -36,9 +41,9 @@ def get_last_round_from_sheet():
         if len(records) < 2:
             return None
         last_row = records[-1]
-        return int(last_row[1])  # 회차 숫자
+        return int(last_row[1])  # 회차 (두 번째 열)
     except Exception as e:
-        print("❌ 시트에서 마지막 회차 불러오기 실패:", e)
+        print("❌ 시트 회차 조회 실패:", e)
         return None
 
 def save_to_sheet(data):
@@ -56,23 +61,23 @@ def save_to_sheet(data):
         print("❌ 시트 저장 실패:", e)
 
 def main():
-    print("🔄 자동 저장 시작")
+    print("⏰ 자동 저장 시작")
 
     latest_data = fetch_latest_result()
     if not latest_data:
-        print("⚠️ 가져온 데이터가 없습니다.")
+        print("⚠️ 유효한 데이터 없음. 저장 중단.")
         return
 
     current_round = int(latest_data.get("date_round", 0))
     last_saved_round = get_last_round_from_sheet()
 
-    print("📌 가장 마지막 저장된 회차:", last_saved_round)
-    print("📌 지금 가져온 최신 회차:", current_round)
+    print("📝 가장 마지막 저장된 회차:", last_saved_round)
+    print("🆕 지금 가져온 회차:", current_round)
 
     if current_round != last_saved_round:
         save_to_sheet(latest_data)
     else:
-        print("ℹ️ 저장할 새 회차 없음")
+        print("🔁 이미 저장된 회차입니다. 저장 생략.")
 
 if __name__ == "__main__":
     main()
