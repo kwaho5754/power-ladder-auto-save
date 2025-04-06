@@ -13,4 +13,6 @@ AppData/
 *.log
 
 # 서비스 계정 키
+service_account.json
+client_secret_*.json
 vertical-hook-*.json
