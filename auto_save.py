@@ -1,42 +1,35 @@
 import gspread
-import json
-import os
 from oauth2client.service_account import ServiceAccountCredentials
-import requests
 
-# 1. 구글 시트 인증
-scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-json_data = os.environ.get("GOOGLE_SHEET_JSON")
-
-with open("service_account.json", "w") as f:
-    f.write(json_data)
-
-creds = ServiceAccountCredentials.from_json_keyfile_name("service_account.json", scope)
+# 1. 구글 API 인증
+scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
+creds = ServiceAccountCredentials.from_json_keyfile_name('service_account.json', scope)
 client = gspread.authorize(creds)
 
 # 2. 시트 열기
-spreadsheet_id = "1HXRIbAOEotWONqG3FVT9iub9oWNANs7orkUKjmpqfn4"
-sheet = client.open_by_key(spreadsheet_id).worksheet("예측결과")
+spreadsheet_id = "YOUR_SPREADSHEET_ID"  # 구글 스프레드시트 ID
+worksheet = client.open_by_key(spreadsheet_id).worksheet("예측결과")  # 시트 이름
 
-# 3. JSON 데이터 가져오기
-url = "https://ntry.com/data/json/games/power_ladder/recent_result.json"
-response = requests.get(url)
-data = response.json()  # 딕셔너리 형식
+# 3. 데이터 가져오기
+data = worksheet.get_all_records()  # 시트에서 모든 데이터 가져오기
 
-# 4. 한 줄로 저장할 데이터 구성
+# 4. 마지막 데이터 추출
+latest = data[-1]  # 마지막 데이터 가져오기
+
+# 5. 데이터 저장
 row = [
-    data["reg_date"],
-    data["date_round"],
-    data["start_point"],
-    data["line_count"],
-    data["odd_even"]
+    latest["reg_date"],    # 'reg_date' 필드
+    latest["date_round"],  # 'date_round' 필드
+    latest["start_point"], # 'start_point' 필드
+    latest["line_count"],  # 'line_count' 필드
+    latest["odd_even"]     # 'odd_even' 필드
 ]
 
-# 5. 중복 체크 후 저장
-existing = sheet.col_values(2)  # 회차 (B열)
-
-if str(data["date_round"]) not in existing:
-    sheet.append_row(row)
+# 6. 중복 회차 저장 방지
+existing = worksheet.col_values(2)  # 회차를 기준으로 중복 확인 (2번째 컬럼)
+if str(latest["date_round"]) not in existing:
+    worksheet.append_row(row)  # 중복이 없으면 시트에 추가
     print("✅ 저장 완료:", row)
 else:
-    print("⚠️ 이미 저장된 회차입니다:", data["date_round"])
+    print(f"⚠️ 이미 저장된 회차입니다: {latest['date_round']}")
+
