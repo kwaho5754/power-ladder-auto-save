@@ -1,35 +1,38 @@
 import os
 import gspread
-from oauth2client.service_account import ServiceAccountCredentials
+from google.oauth2.service_account import Credentials
 
-# 1. 환경 변수에서 서비스 계정 JSON 파일 경로 읽어오기
-service_account_json = os.environ.get("SERVICE_ACCOUNT_JSON")
+# 환경변수에서 서비스 계정 JSON 파일 경로를 읽어오기
+service_account_json = os.environ.get("GOOGLE_SHEET_JSON")
 
-# 환경변수 값 확인
-print("환경변수 값:", service_account_json)
-
-# 2. 환경변수에서 경로가 없다면 예외 처리
 if not service_account_json:
-    raise ValueError("환경변수 'SERVICE_ACCOUNT_JSON'이 설정되지 않았습니다.")
+    raise ValueError("환경변수 'GOOGLE_SHEET_JSON'이 설정되지 않았습니다.")
+else:
+    print("환경변수 값:", service_account_json)
 
-# 3. 구글 API 인증을 위한 범위 설정
-scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+# 서비스 계정 인증
+credentials = Credentials.from_service_account_file(
+    service_account_json, 
+    scopes=["https://www.googleapis.com/auth/spreadsheets"]
+)
 
-# 4. 인증 진행
-credentials = ServiceAccountCredentials.from_json_keyfile_name(service_account_json, scope)
+# Google Sheets API 클라이언트 초기화
 client = gspread.authorize(credentials)
 
-# 5. 스프레드시트 ID (이 부분은 직접 입력하거나 환경변수에서 읽을 수 있음)
-spreadsheet_id = '1HXRIbAOEotWONqG3FVT9iub9oWNANs7orkUKjmpqfn4'
+# Google Sheets 문서 열기
+spreadsheet_id = "1HXRIbAOEotWONqG3FVT9iub9oWNANs7orkUKjmpqfn4"
+worksheet = client.open_by_key(spreadsheet_id).worksheet("예측결과")
 
-# 6. 구글 시트 열기
-worksheet = client.open_by_key(spreadsheet_id).worksheet("예측결과")  # 시트 이름을 수정해주세요
+# 데이터 입력 예시 (새로운 데이터)
+data = {
+    "reg_date": "2025-04-06",
+    "date_round": 238,
+    "start_point": "LEFT",
+    "line_count": 3,
+    "odd_even": "EVEN"
+}
 
-# 7. 예시: 시트에서 데이터 읽기
-data = worksheet.get_all_records()
-print("데이터 읽기 완료:", data)
+# 데이터를 시트에 추가하기
+worksheet.append_row([data["reg_date"], data["date_round"], data["start_point"], data["line_count"], data["odd_even"]])
 
-# 8. 예시: 데이터 추가하기
-row = ["2025-04-06", "238", "LEFT", "3", "EVEN"]
-worksheet.append_row(row)
-print("데이터 저장 완료:", row)
+print("데이터가 시트에 저장되었습니다.")
