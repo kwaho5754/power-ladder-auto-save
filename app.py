@@ -16,7 +16,7 @@ def predict():
     client = gspread.authorize(creds)
 
     # 시트 불러오기
-    sheet = client.open("실시간결과").worksheet("예측결과")
+    sheet = client.open("실시간결과").get_worksheet(0)
     data = sheet.get_all_records()
 
     # 데이터프레임으로 변환
