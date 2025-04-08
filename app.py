@@ -9,21 +9,20 @@ app = Flask(__name__)
 
 @app.route("/predict", methods=["GET"])
 def predict():
-    # 서비스 계정 JSON을 환경변수에서 읽음
+    # 환경 변수에서 서비스 계정 정보 읽기
     service_account_json = os.environ.get("SERVICE_ACCOUNT_JSON")
     if not service_account_json:
         raise ValueError("환경변수 'SERVICE_ACCOUNT_JSON'이 설정되지 않았습니다.")
 
-    # 환경변수 값을 JSON 파일로 저장
     with open("service_account.json", "w") as f:
         f.write(service_account_json)
 
-    # 구글 시트 인증
+    # 인증 설정
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
     credentials = ServiceAccountCredentials.from_json_keyfile_name("service_account.json", scope)
     client = gspread.authorize(credentials)
 
-    # 구글 시트 열기
+    # 시트 연결
     spreadsheet_id = "1HXRIbAOEotWONqG3FVT9iub9oWNANs7orkUKjmpqfn4"
     worksheet = client.open_by_key(spreadsheet_id).worksheet("예측결과")
     data = worksheet.get_all_records()
@@ -33,22 +32,26 @@ def predict():
 
     df = pd.DataFrame(data)
 
-    # 열 이름이 한국어 기준일 때 정확하게 사용해야 함
+    # 실제 시트 열 이름 → 내부 분석 열 이름으로 변경
     df = df.rename(columns={
-        "날짜": "reg_date",
-        "회차": "date_round",
         "방향": "start_point",
         "줄수": "line_count",
-        "홀짝": "odd_even"
+        "홀짝": "odd_even",
+        "회차": "date_round",
+        "날짜": "reg_date"
     })
 
-    # 최신 회차
+    # 회차 기준 정렬
+    df = df.sort_values(by="date_round", ascending=False)
+
+    # 최신 회차 추정
     latest_round = df["date_round"].max()
 
-    # 최근 30줄 분석
-    recent_data = df.sort_values(by="date_round", ascending=False).head(30)
+    # 최근 30줄 데이터 기준 조합 생성
+    recent_data = df.head(30)
     recent_data["조합"] = recent_data["start_point"] + recent_data["line_count"].astype(str) + recent_data["odd_even"]
 
+    # 등장 빈도 기반 예측
     counts = Counter(recent_data["조합"])
     top_3 = counts.most_common(3)
 
