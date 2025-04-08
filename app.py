@@ -1,63 +1,55 @@
 from flask import Flask
-import gspread
 import pandas as pd
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
 import os
 import json
-from oauth2client.service_account import ServiceAccountCredentials
-from flask import jsonify
+from datetime import datetime, timedelta
 
 app = Flask(__name__)
 
-# 환경변수에서 JSON 읽기
-SERVICE_ACCOUNT_JSON = os.environ.get("SERVICE_ACCOUNT_JSON")
-SERVICE_ACCOUNT_INFO = json.loads(SERVICE_ACCOUNT_JSON)
-
-# 구글 시트 인증
-scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-credentials = ServiceAccountCredentials.from_json_keyfile_dict(SERVICE_ACCOUNT_INFO, scope)
-client = gspread.authorize(credentials)
-
-# 구글 시트 열기
-sheet = client.open("실시간결과").worksheet("예측결과")
-
-@app.route("/predict")
+@app.route('/predict')
 def predict():
-    # 데이터 가져오기
+    # 구글 인증
+    SERVICE_ACCOUNT_JSON = os.environ.get("SERVICE_ACCOUNT_JSON")
+    service_account_info = json.loads(SERVICE_ACCOUNT_JSON)
+    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+    credentials = ServiceAccountCredentials.from_json_keyfile_dict(service_account_info, scope)
+    client = gspread.authorize(credentials)
+
+    # 시트 불러오기
+    sheet = client.open("실시간결과").worksheet("예측결과")
     data = sheet.get_all_records()
-
-    if not data:
-        return "시트에 데이터가 없습니다.", 400
-
     df = pd.DataFrame(data)
 
-    # 최신 30줄 기준 분석
-    recent_data = df.tail(30)
+    # 날짜 필터링 (최근 3일)
+    df['날짜'] = pd.to_datetime(df['날짜'], errors='coerce')
+    recent_days = datetime.now() - timedelta(days=3)
+    df = df[df['날짜'] >= recent_days]
 
-    # '좌우', '줄수', '홀짝' 열이 모두 존재하는지 확인
-    if not all(col in recent_data.columns for col in ['좌우', '줄수', '홀짝']):
-        return "시트 열 이름 오류: '좌우', '줄수', '홀짝'이 필요합니다.", 400
+    if df.empty:
+        return "❗최근 3일 이내 데이터가 없어 예측을 실행할 수 없습니다.", 200, {'Content-Type': 'text/plain; charset=utf-8'}
 
-    # 조합 만들기
-    recent_data['조합'] = recent_data['좌우'] + recent_data['줄수'].astype(str) + recent_data['홀짝']
+    # 최근 회차 기준 분석
+    df = df.sort_values(by='회차')
+    df['회차'] = pd.to_numeric(df['회차'], errors='coerce')
+    df = df.dropna(subset=['회차'])
+    df['회차'] = df['회차'].astype(int)
 
-    # 빈도수 세기
-    counts = recent_data['조합'].value_counts()
+    df['조합'] = df['좌우'] + df['줄수'].astype(str) + df['홀짝']
+    top3 = df['조합'].value_counts().head(3).index.tolist()
+    current_round = df['회차'].max() + 1
 
-    # 가장 많이 나온 순으로 3개 선택
-    top3 = counts.head(3).index.tolist()
+    result = f"""
+✅ 최근 3일 기준 예측 결과  
+(예측 대상: {current_round}회차)
 
-    # 현재 회차 계산
-    last_round = int(df['회차'].iloc[-1])  # 마지막 행의 회차
-    current_round = last_round + 1
+1위: {top3[0]}  
+2위: {top3[1]}  
+3위: {top3[2]}  
+(최근 {len(df)}줄 분석됨)
+"""
+    return result, 200, {'Content-Type': 'text/plain; charset=utf-8'}
 
-    # 결과 만들기
-    result = f"✅ 현재 진행 중인 회차: {current_round}회차\n"
-    result += "✅ 최근 회차 기준 예측 결과\n"
-    for i, combo in enumerate(top3, start=1):
-        result += f"{i}위: {combo}\n"
-    result += "(최근 30줄 기준 분석)"
-
-    return f"<pre>{result}</pre>"
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     app.run()
