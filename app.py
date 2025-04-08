@@ -1,56 +1,63 @@
 from flask import Flask
-import pandas as pd
 import gspread
-from oauth2client.service_account import ServiceAccountCredentials
+import pandas as pd
 import os
-import io
 import json
+from oauth2client.service_account import ServiceAccountCredentials
+from flask import jsonify
 
 app = Flask(__name__)
 
-@app.route('/predict')
-def predict():
-    # 인증
-    scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
-    credentials_info = json.loads(os.environ['SERVICE_ACCOUNT_JSON'])
-    credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_info, scope)
-    client = gspread.authorize(credentials)
+# 환경변수에서 JSON 읽기
+SERVICE_ACCOUNT_JSON = os.environ.get("SERVICE_ACCOUNT_JSON")
+SERVICE_ACCOUNT_INFO = json.loads(SERVICE_ACCOUNT_JSON)
 
-    # 시트 열기
-    sheet = client.open("실시간결과").worksheet("예측결과")
+# 구글 시트 인증
+scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+credentials = ServiceAccountCredentials.from_json_keyfile_dict(SERVICE_ACCOUNT_INFO, scope)
+client = gspread.authorize(credentials)
+
+# 구글 시트 열기
+sheet = client.open("실시간결과").worksheet("예측결과")
+
+@app.route("/predict")
+def predict():
+    # 데이터 가져오기
     data = sheet.get_all_records()
 
-    # 데이터프레임으로 변환
+    if not data:
+        return "시트에 데이터가 없습니다.", 400
+
     df = pd.DataFrame(data)
 
-    # 최신 회차 기준으로 최근 30줄 가져오기
+    # 최신 30줄 기준 분석
     recent_data = df.tail(30)
+
+    # '좌우', '줄수', '홀짝' 열이 모두 존재하는지 확인
+    if not all(col in recent_data.columns for col in ['좌우', '줄수', '홀짝']):
+        return "시트 열 이름 오류: '좌우', '줄수', '홀짝'이 필요합니다.", 400
 
     # 조합 만들기
     recent_data['조합'] = recent_data['좌우'] + recent_data['줄수'].astype(str) + recent_data['홀짝']
 
-    # 빈도수 계산
+    # 빈도수 세기
     counts = recent_data['조합'].value_counts()
 
-    # 가장 많이 나온 3개 조합 추출
+    # 가장 많이 나온 순으로 3개 선택
     top3 = counts.head(3).index.tolist()
 
-    # 현재 회차 가져오기 (마지막 줄 기준 +1)
-    try:
-        last_round = int(df['회차'].iloc[-1])
-        current_round = last_round + 1
-    except:
-        current_round = "알 수 없음"
+    # 현재 회차 계산
+    last_round = int(df['회차'].iloc[-1])  # 마지막 행의 회차
+    current_round = last_round + 1
 
-    # 예측 결과 포맷
-    result = f"""
-    ✅ 최근 회차 기준 예측 결과 (예측 대상 회차: {current_round}회차)<br>
-    1위: {top3[0]}<br>
-    2위: {top3[1]}<br>
-    3위: {top3[2]}<br>
-    (최근 30줄 기준 분석)
-    """
-    return result
+    # 결과 만들기
+    result = f"✅ 현재 진행 중인 회차: {current_round}회차\n"
+    result += "✅ 최근 회차 기준 예측 결과\n"
+    for i, combo in enumerate(top3, start=1):
+        result += f"{i}위: {combo}\n"
+    result += "(최근 30줄 기준 분석)"
 
-if __name__ == '__main__':
+    return f"<pre>{result}</pre>"
+
+if __name__ == "__main__":
     app.run()
