@@ -1,46 +1,50 @@
-import os
-import json
+import requests
 import gspread
-from google.oauth2.service_account import Credentials
+from oauth2client.service_account import ServiceAccountCredentials
+import json
+import os
 
-# 1. 환경변수에서 JSON 문자열 가져오기
-json_str = os.environ.get("GOOGLE_SHEET_JSON")
+# 환경변수에서 서비스 계정 정보 불러오기
+service_account_json = os.environ.get("SERVICE_ACCOUNT_JSON")
+if service_account_json is None:
+    raise ValueError("환경변수 'SERVICE_ACCOUNT_JSON'이 설정되지 않았습니다.")
 
-if not json_str:
-    raise ValueError("환경변수 'GOOGLE_SHEET_JSON'이 설정되지 않았습니다.")
+# JSON 문자열을 딕셔너리로 파싱
+info = json.loads(service_account_json)
 
-# 2. JSON 문자열을 실제 파일로 저장
-json_path = "service_account.json"
-with open(json_path, "w") as f:
-    f.write(json_str)
+# 구글 시트 인증
+scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+credentials = ServiceAccountCredentials.from_json_keyfile_dict(info, scope)
+gc = gspread.authorize(credentials)
 
-# 3. 서비스 계정 인증
-credentials = Credentials.from_service_account_file(
-    json_path,
-    scopes=["https://www.googleapis.com/auth/spreadsheets"]
-)
-
-# 4. gspread 클라이언트 인증
-client = gspread.authorize(credentials)
-
-# 5. 스프레드시트 연결
+# 시트 열기
 spreadsheet_id = "1HXRIbAOEotWONqG3FVT9iub9oWNANs7orkUKjmpqfn4"
-worksheet = client.open_by_key(spreadsheet_id).worksheet("예측결과")
+worksheet = gc.open_by_key(spreadsheet_id).worksheet("예측결과")
 
-# 6. 저장할 데이터 예시
-data = {
-    "reg_date": "2025-04-06",
-    "date_round": 238,
-    "start_point": "LEFT",
-    "line_count": 3,
-    "odd_even": "EVEN"
-}
+# 실시간 JSON 데이터 수집
+url = "https://ntry.com/data/json/games/power_ladder/recent_result.json"
+response = requests.get(url)
+result = response.json()
 
-# 7. 데이터 저장
-worksheet.append_row([
-    data["reg_date"], data["date_round"],
-    data["start_point"], data["line_count"],
-    data["odd_even"]
-])
+# 파싱
+latest = result["list"][0]
+reg_date = latest["reg_date"]
+round_num = latest["date_round"]
+start_point = latest["start_point"]
+line_count = latest["line_count"]
+odd_even = latest["odd_even"]
 
-print("✅ 시트에 데이터가 저장되었습니다.")
+# 시트에 이미 동일한 회차가 있는지 확인
+existing_data = worksheet.get_all_values()
+is_duplicate = False
+for row in existing_data:
+    if str(round_num) in row and reg_date in row:
+        is_duplicate = True
+        break
+
+# 중복이 아니면 저장
+if not is_duplicate:
+    worksheet.append_row([reg_date, round_num, start_point, line_count, odd_even])
+    print(f"✅ 저장 완료: {[reg_date, round_num, start_point, line_count, odd_even]}")
+else:
+    print(f"⚠️ 이미 저장된 회차입니다: {round_num}")
