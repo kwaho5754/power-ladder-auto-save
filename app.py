@@ -1,67 +1,52 @@
 from flask import Flask
-import requests
-import gspread
-import json
 import os
+import json
+import gspread
+import pandas as pd
 from oauth2client.service_account import ServiceAccountCredentials
-from datetime import datetime
 
 app = Flask(__name__)
 
-@app.route('/')
-def index():
-    return '✅ Power Ladder Auto Save is running!'
+# ✅ 구글 시트 연동 설정
+SERVICE_ACCOUNT_JSON = os.environ.get("SERVICE_ACCOUNT_JSON")
+if not SERVICE_ACCOUNT_JSON:
+    raise ValueError("SERVICE_ACCOUNT_JSON 환경변수가 없습니다.")
+info = json.loads(SERVICE_ACCOUNT_JSON)
+scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+credentials = ServiceAccountCredentials.from_json_keyfile_dict(info, scope)
+gc = gspread.authorize(credentials)
 
-@app.route('/save_recent_result')
-def save_recent_result():
-    try:
-        # ▶️ 1. 실시간 결과 JSON 주소 요청
-        url = "https://ntry.com/data/json/games/power_ladder/recent_result.json"
-        response = requests.get(url)
-        data = response.json()
+# ✅ 시트 정보
+SPREADSHEET_ID = "1HXRIbAOEotWONqG3FVT9iub9oWNANs7orkUKjmpqfn4"
+WORKSHEET_NAME = "예측결과"
 
-        # ⚠️ 리스트가 비어있으면 예외 처리
-        if not isinstance(data, list) or len(data) == 0:
-            return "⚠️ No recent result data available.", 500
+@app.route('/predict')
+def predict():
+    # 시트 데이터 가져오기
+    worksheet = gc.open_by_key(SPREADSHEET_ID).worksheet(WORKSHEET_NAME)
+    data = worksheet.get_all_values()[1:]  # 헤더 제외
 
-        # ▶️ 2. 가장 최신 회차 데이터 추출
-        latest = data[0]
-        round_number = str(latest.get('date_round', ''))
-        reg_date = latest.get('reg_date', '')
-        start_point = latest.get('start_point', '')
-        line_count = latest.get('line_count', '')
-        odd_even = latest.get('odd_even', '')
+    if len(data) < 10:
+        return "데이터가 부족합니다."
 
-        # ▶️ 3. 구글 시트 인증 (환경변수에서 불러와 파일로 저장)
-        json_str = os.environ.get('GOOGLE_SHEET_JSON')
-        if not json_str:
-            return "⚠️ GOOGLE_SHEET_JSON env variable not found", 500
+    df = pd.DataFrame(data, columns=["date", "round", "좌우", "줄수", "홀짝"])
 
-        json_path = '/tmp/credential.json'
-        with open(json_path, 'w') as f:
-            f.write(json_str)
+    # 최근 30줄 기준 분석
+    recent = df.tail(30)
 
-        # ▶️ 4. Google Sheets API 연결
-        scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
-        credentials = ServiceAccountCredentials.from_json_keyfile_name(json_path, scope)
-        gc = gspread.authorize(credentials)
+    # 조합별 카운트
+    recent["조합"] = recent["좌우"] + recent["줄수"] + recent["홀짝"]
+    counts = recent["조합"].value_counts()
 
-        # ▶️ 5. 구글 시트 열기 및 시트 선택
-        sheet_id = '1HXRIbAOEotWONqG3FVT9iub9oWNANs7orkUKjmpqfn4'  # 실시간결과 문서 ID
-        sheet = gc.open_by_key(sheet_id).worksheet('예측결과')
+    top3 = counts.head(3).index.tolist()
 
-        # ▶️ 6. 중복 확인: 이미 있는 회차인지 확인
-        existing = sheet.col_values(1)
-        if round_number in existing:
-            return f"⚠️ Round {round_number} already exists.", 200
-
-        # ▶️ 7. 시트에 새 데이터 추가
-        sheet.append_row([round_number, reg_date, start_point, line_count, odd_even])
-        return f"✅ Round {round_number} saved successfully!", 200
-
-    except Exception as e:
-        return f"❌ Internal error: {str(e)}", 500
-
+    return f"""
+    ✅ 최근 회차 기준 예측 결과<br>
+    1위: {top3[0]}<br>
+    2위: {top3[1]}<br>
+    3위: {top3[2]}<br>
+    (최근 30줄 기준 분석)
+    """
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=10000)
