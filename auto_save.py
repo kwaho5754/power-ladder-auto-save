@@ -26,20 +26,23 @@ url = "https://ntry.com/data/json/games/power_ladder/recent_result.json"
 response = requests.get(url)
 result = response.json()
 
-# ▶ result는 리스트 형태로 감싸져 있다고 가정
-latest = result[0]
-
-# ▶ 저장할 값 추출
-reg_date = latest["reg_date"]
-date_round = latest["date_round"]
-start_point = latest["start_point"]
-line_count = latest["line_count"]
-odd_even = latest["odd_even"]
-
-# ▶ 중복 체크
+# ▶ 기존 시트에 있는 회차들 추출 (날짜+회차 조합으로 중복 확인)
 existing_data = worksheet.get_all_values()
-if [str(reg_date), str(date_round), start_point, str(line_count), odd_even] in existing_data:
-    print("✅ 이미 저장된 데이터입니다.")
-else:
+existing_keys = {f"{row[0]}_{row[1]}" for row in existing_data if len(row) >= 2}
+
+# ▶ 최근 3회차 확인
+for item in result[:3]:
+    reg_date = item["reg_date"]
+    date_round = item["date_round"]
+    start_point = item["start_point"]
+    line_count = item["line_count"]
+    odd_even = item["odd_even"]
+    
+    unique_key = f"{reg_date}_{date_round}"
+
+    if unique_key in existing_keys:
+        print(f"⏩ 이미 저장된 회차입니다: {unique_key}")
+        continue
+
     worksheet.append_row([reg_date, date_round, start_point, line_count, odd_even])
-    print("✅ 시트에 데이터가 저장되었습니다.")
+    print(f"✅ 시트에 저장됨: {reg_date}, 회차 {date_round}")
