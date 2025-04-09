@@ -69,6 +69,18 @@ def predict():
         if reversed_seq[:i] == reversed_seq[i:2*i]:
             repeated.append(reversed_seq[:i])
 
+    # 흐름 전환 분석
+    def extract_post_turn_combos(seq):
+        post_combos = []
+        for i in range(1, len(seq)):
+            if seq[i] != seq[i-1]:
+                post_combos.append(seq[i])
+        return Counter(post_combos)
+
+    turn_counter = extract_post_turn_combos(combo_list)
+    reverse_sequence = combo_list[::-1]
+    reverse_patterns = [tuple(reverse_sequence[i:i+3]) for i in range(len(reverse_sequence)-2)]
+
     # 점수 계산 (네 가지 조합만)
     combo_score = {}
     for c in valid_combos:
@@ -81,7 +93,8 @@ def predict():
             odd_even[oe] +
             (5 if c in sliding_top else 0) +
             (5 if any(r in c for r in repeated) else 0) +
-            (7 if c not in counter else 0)
+            (7 if c not in counter else 0) +
+            (3 if c in turn_counter else 0)
         )
         combo_score[c] = score
 
@@ -98,7 +111,11 @@ def predict():
     1위: {valid_combos[top3[0]]} ({top3[0]})<br>
     2위: {valid_combos[top3[1]]} ({top3[1]})<br>
     3위: {valid_combos[top3[2]]} ({top3[2]})<br>
-    (최근 {len(recent_df)}줄 분석됨)
+    (최근 {len(recent_df)}줄 분석됨)<br><br>
+    🧠 흐름 기반 고급 분석 포함<br>
+    - 전환점 이후 조합 반영<br>
+    - 역방향 흐름 감지<br>
+    - 반복 패턴 포함 여부<br>
     """
     return html
 
