@@ -40,9 +40,14 @@ def predict():
     if recent_df.empty:
         return "최근 5일 데이터가 부족합니다.", 500
 
-    # ✅ 4. 현재 회차 추정
-    last_round = recent_df["회차"].max()
-    current_round = last_round + 1
+    # ✅ 4. 현재 날짜와 회차 추정
+    today = datetime.datetime.now().strftime('%Y-%m-%d')
+    today_df = recent_df[recent_df["날짜"] == today]
+
+    if today_df.empty:
+        current_round = 1
+    else:
+        current_round = today_df["회차"].max() + 1
 
     # ✅ 5. 조합 열 생성 및 빈도 계산
     recent_df["조합"] = recent_df["좌우"] + recent_df["줄수"].astype(str) + recent_df["홀짝"]
