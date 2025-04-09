@@ -1,55 +1,55 @@
 from flask import Flask
-import pandas as pd
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
-import os
-import json
+import pandas as pd
+from collections import Counter
 from datetime import datetime, timedelta
 
 app = Flask(__name__)
 
-@app.route('/predict')
+@app.route("/predict")
 def predict():
-    # 구글 인증
-    SERVICE_ACCOUNT_JSON = os.environ.get("SERVICE_ACCOUNT_JSON")
-    service_account_info = json.loads(SERVICE_ACCOUNT_JSON)
-    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    credentials = ServiceAccountCredentials.from_json_keyfile_dict(service_account_info, scope)
-    client = gspread.authorize(credentials)
+    # 구글 시트 인증
+    scope = [
+        "https://spreadsheets.google.com/feeds",
+        "https://www.googleapis.com/auth/spreadsheets",
+        "https://www.googleapis.com/auth/drive.file",
+        "https://www.googleapis.com/auth/drive"
+    ]
+    creds = ServiceAccountCredentials.from_json_keyfile_name("service_account.json", scope)
+    client = gspread.authorize(creds)
 
-    # 시트 불러오기
+    # 시트 열기
     sheet = client.open("실시간결과").worksheet("예측결과")
     data = sheet.get_all_records()
     df = pd.DataFrame(data)
 
-    # 날짜 필터링 (최근 3일)
-    df['날짜'] = pd.to_datetime(df['날짜'], errors='coerce')
-    recent_days = datetime.now() - timedelta(days=3)
-    df = df[df['날짜'] >= recent_days]
+    # 날짜 컬럼이 datetime 형식으로 인식되도록 변환
+    df['날짜'] = pd.to_datetime(df['날짜'])
 
-    if df.empty:
-        return "❗최근 3일 이내 데이터가 없어 예측을 실행할 수 없습니다.", 200, {'Content-Type': 'text/plain; charset=utf-8'}
+    # 최근 3일치 데이터 필터링
+    three_days_ago = datetime.now() - timedelta(days=3)
+    recent_df = df[df['날짜'] >= three_days_ago]
 
-    # 최근 회차 기준 분석
-    df = df.sort_values(by='회차')
-    df['회차'] = pd.to_numeric(df['회차'], errors='coerce')
-    df = df.dropna(subset=['회차'])
-    df['회차'] = df['회차'].astype(int)
+    # 회차 계산 (날짜가 바뀌면 1회차부터 다시 시작되도록)
+    latest_date = df['날짜'].max()
+    today_rounds = df[df['날짜'] == latest_date]['회차']
+    latest_round = today_rounds.max()
+    target_round = latest_round + 1
 
-    df['조합'] = df['좌우'] + df['줄수'].astype(str) + df['홀짝']
-    top3 = df['조합'].value_counts().head(3).index.tolist()
-    current_round = df['회차'].max() + 1
+    # 최근 줄 기준 분석용 문자열 생성
+    recent_df['조합'] = recent_df['좌우'] + recent_df['줄수'].astype(str) + recent_df['홀짝']
+    combination_counts = Counter(recent_df['조합'])
+    top3 = combination_counts.most_common(3)
 
-    result = f"""
-✅ 최근 3일 기준 예측 결과  
-(예측 대상: {current_round}회차)
+    # 결과 HTML 생성
+    result = "<p>✅ 최근 3일 기준 예측 결과<br>"
+    result += f"(예측 대상: {target_round}회차)<br><br>"
+    for i, (combo, count) in enumerate(top3):
+        result += f"{i+1}위: {combo}<br>"
+    result += f"<br>(최근 {len(recent_df)}줄 분석됨)</p>"
 
-1위: {top3[0]}  
-2위: {top3[1]}  
-3위: {top3[2]}  
-(최근 {len(df)}줄 분석됨)
-"""
-    return result, 200, {'Content-Type': 'text/plain; charset=utf-8'}
+    return result
 
-if __name__ == '__main__':
-    app.run()
+if __name__ == "__main__":
+    app.run(debug=True)
