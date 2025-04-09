@@ -7,47 +7,54 @@ from collections import Counter
 
 app = Flask(__name__)
 
-# 서비스 계정 JSON 파일을 환경 변수에서 가져오기
-import os
-import json
-filename = 'service_account.json'
-with open(filename, 'w') as f:
-    f.write(os.environ['SERVICE_ACCOUNT_JSON'])
-
-scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-creds = ServiceAccountCredentials.from_json_keyfile_name(filename, scope)
-client = gspread.authorize(creds)
-sheet = client.open("실시간결과").worksheet("예측결과")
-
-@app.route("/predict")
+@app.route("/predict", methods=["GET"])
 def predict():
-    data = sheet.get_all_values()
-    headers = [h.strip() for h in data[0]]  # ✅ 공백 제거하여 KeyError 방지
-    rows = data[1:]
-    df = pd.DataFrame(rows, columns=headers)
+    # 구글 시트 인증
+    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+    creds = ServiceAccountCredentials.from_json_keyfile_name("service_account.json", scope)
+    client = gspread.authorize(creds)
 
-    # 날짜 열을 datetime으로 변환
-    df['날짜'] = pd.to_datetime(df['날짜'])
+    # 시트 불러오기
+    sheet = client.open("실시간결과").worksheet("예측결과")
+    data = sheet.get_all_records()
+
+    if not data:
+        return "시트에 데이터가 없습니다."
+
+    df = pd.DataFrame(data)
+    df.columns = df.columns.str.strip()  # 🔥 열 이름 공백 제거 (중요!)
+
+    # 날짜 변환
+    df["날짜"] = pd.to_datetime(df["날짜"], errors="coerce")
+    df = df.dropna(subset=["날짜"])
 
     # 최근 5일 기준 필터링
-    today = datetime.today().date()
-    recent_date = today - timedelta(days=5)
-    df_recent = df[df['날짜'].dt.date >= recent_date]
+    today = datetime.now().date()
+    recent_df = df[df["날짜"] >= pd.Timestamp(today - timedelta(days=5))]
 
-    # 분석용 조합 문자열 생성
-    df_recent['조합'] = df_recent['좌/우'] + df_recent['줄 수'] + df_recent['홀/짝']
-    count = Counter(df_recent['조합'])
-    top3 = count.most_common(3)
+    # 분석 대상 회차 추정
+    if recent_df.empty:
+        return "최근 5일간 데이터가 없습니다."
+    recent_df = recent_df.sort_values("회차")
+    next_round = recent_df["회차"].max() + 1
 
-    # 현재 회차 추정
-    df_today = df[df['날짜'].dt.date == today]
-    current_round = df_today['회차'].astype(int).max() + 1 if not df_today.empty else 1
+    # 조합 열 생성
+    recent_df["조합"] = (
+        recent_df["좌/우"].astype(str).str.strip() +
+        recent_df["줄 수"].astype(str).str.strip() +
+        recent_df["홀/짝"].astype(str).str.strip()
+    )
 
-    result = f"<p>✅ 최근 5일 기준 예측 결과 (예측 대상: {current_round}회차)</p>"
-    for i, (combo, _) in enumerate(top3, 1):
-        result += f"<p>{i}위: {combo}</p>"
-    result += f"<p>(최근 {len(df_recent)}줄 분석됨)</p>"
-    return result
+    # 조합별 빈도수 분석
+    combo_counts = Counter(recent_df["조합"])
+    top_3 = combo_counts.most_common(3)
 
-if __name__ == '__main__':
-    app.run(debug=True)
+    result_html = "<br>✅ 최근 5일 기준 예측 결과 (예측 대상: {}회차)<br>".format(next_round)
+    for i, (combo, count) in enumerate(top_3, 1):
+        result_html += "{}위: {}<br>".format(i, combo)
+
+    result_html += "(최근 {}줄 분석됨)".format(len(recent_df))
+    return result_html
+
+if __name__ == "__main__":
+    app.run()
