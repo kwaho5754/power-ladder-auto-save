@@ -23,62 +23,55 @@ def predict():
 
     # 데이터프레임 구성
     df = pd.DataFrame(data[1:], columns=data[0])
-    df = df[df['날짜'] != '']  # 빈 행 제거
-
-    # 날짜 + 회차 기준 정렬
+    df = df[df['날짜'] != '']
     df['날짜'] = pd.to_datetime(df['날짜'])
     df['회차'] = df['회차'].astype(int)
     df = df.sort_values(by=['날짜', '회차'])
 
-    # 현재 날짜 및 회차 추정
-    today = datetime.datetime.now().date()
+    # 회차 추정
     latest_date = df['날짜'].max().date()
     today_df = df[df['날짜'].dt.date == latest_date]
     latest_round = today_df['회차'].max()
-
-    # 예측 대상 회차 = 최신 회차 + 1
     target_round = latest_round + 1 if latest_round < 288 else 1
     base_date = latest_date if latest_round < 288 else latest_date + datetime.timedelta(days=1)
 
-    # 최근 5일 데이터 필터링
+    # 최근 5일 데이터
     start_date = base_date - datetime.timedelta(days=5)
     recent_df = df[df['날짜'].dt.date >= start_date]
-
-    # ----------------------------- 고급 분석 -----------------------------
     recent_df['조합'] = recent_df[['좌우', '줄수', '홀짝']].agg(''.join, axis=1)
-    combos = recent_df['조합'].tolist()
 
-    counter = Counter(combos)
-    most_common = counter.most_common()
+    # 네 가지 조합만 허용
+    valid_combos = {
+        'LEFT3EVEN': '좌삼짝',
+        'RIGHT3ODD': '우삼홀',
+        'LEFT4ODD': '좌사홀',
+        'RIGHT4EVEN': '우사짝'
+    }
 
-    # ✅ 슬라이딩 흐름 분석 (최근 50줄)
+    # 빈도, 속성 분해
+    combo_list = recent_df['조합'].tolist()
+    counter = Counter(combo_list)
+    right_left = Counter(recent_df['좌우'])
+    line_num = Counter(recent_df['줄수'])
+    odd_even = Counter(recent_df['홀짝'])
+
+    # 최근 50줄 분석
     sliding_df = recent_df.tail(50)
     sliding_combos = sliding_df['조합'].tolist()
     sliding_counter = Counter(sliding_combos)
     sliding_top = [x[0] for x in sliding_counter.most_common()]
 
-    # ✅ 좌우 패턴 반복 감지
+    # 반복 감지
     pattern_sequence = ''.join(sliding_df['좌우'].tolist())
     reversed_seq = pattern_sequence[::-1]
     repeated = []
-
     for i in range(3, 8):
-        if reversed_seq[:i] == reversed_seq[i:2 * i]:
+        if reversed_seq[:i] == reversed_seq[i:2*i]:
             repeated.append(reversed_seq[:i])
 
-    # ✅ 최근 안 나온 조합 우선
-    all_combos = ['LEFT3ODD', 'LEFT3EVEN', 'LEFT4ODD', 'LEFT4EVEN',
-                  'RIGHT3ODD', 'RIGHT3EVEN', 'RIGHT4ODD', 'RIGHT4EVEN']
-    never_seen = [c for c in all_combos if c not in counter]
-
-    # ✅ 속성 분해 기반 빈도 분석
-    right_left = Counter(recent_df['좌우'])
-    line_num = Counter(recent_df['줄수'])
-    odd_even = Counter(recent_df['홀짝'])
-
-    # 조합 재구성 점수
+    # 점수 계산 (네 가지 조합만)
     combo_score = {}
-    for c in all_combos:
+    for c in valid_combos:
         lr = c[:5]
         ln = c[5]
         oe = c[6:]
@@ -88,19 +81,23 @@ def predict():
             odd_even[oe] +
             (5 if c in sliding_top else 0) +
             (5 if any(r in c for r in repeated) else 0) +
-            (7 if c in never_seen else 0)
+            (7 if c not in counter else 0)
         )
         combo_score[c] = score
 
+    # 상위 3개 (중복 제거된)
     sorted_combos = sorted(combo_score.items(), key=lambda x: x[1], reverse=True)
-    top3 = [x[0] for x in sorted_combos[:3]]
+    top3 = []
+    for c, _ in sorted_combos:
+        if c not in top3 and len(top3) < 3:
+            top3.append(c)
 
-    # HTML 반환
+    # HTML 출력
     html = f"""
     ✅ 최근 5일 기준 예측 결과 (예측 대상: {target_round}회차)<br>
-    1위: {top3[0]}<br>
-    2위: {top3[1]}<br>
-    3위: {top3[2]}<br>
+    1위: {valid_combos[top3[0]]} ({top3[0]})<br>
+    2위: {valid_combos[top3[1]]} ({top3[1]})<br>
+    3위: {valid_combos[top3[2]]} ({top3[2]})<br>
     (최근 {len(recent_df)}줄 분석됨)
     """
     return html
