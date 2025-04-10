@@ -58,7 +58,6 @@ def predict():
     except Exception as e:
         return jsonify({"error": str(e)})
 
-# ✅ 예측 결과를 외부에서 받아 저장 (POST)
 @app.route("/receive-predict", methods=["POST"])
 def receive_predict():
     data = request.json
