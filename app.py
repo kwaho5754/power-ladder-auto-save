@@ -1,123 +1,100 @@
+from datetime import datetime
+from random import uniform
+from pathlib import Path
+
+# Define the new upgraded app.py code
+upgraded_code = '''
 import os
-import json
-import datetime
 import pandas as pd
+import random
+from flask import Flask, jsonify
+from datetime import datetime, timedelta
+from google.oauth2.service_account import Credentials
 import gspread
-from flask import Flask
-from oauth2client.service_account import ServiceAccountCredentials
 from collections import Counter
 
 app = Flask(__name__)
 
-@app.route("/predict")
+# 구글 시트 인증 설정
+SERVICE_ACCOUNT_JSON = os.environ.get("SERVICE_ACCOUNT_JSON")
+SCOPES = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+SHEET_ID = "1HXRIbAOEotWONqG3FVT9iub9oWNANs7orkUKjmpqfn4"
+SHEET_NAME = "예측결과"
+
+def load_data():
+    filename = "service_account.json"
+    with open(filename, "w") as f:
+        f.write(SERVICE_ACCOUNT_JSON)
+
+    creds = Credentials.from_service_account_file(filename, scopes=SCOPES)
+    gc = gspread.authorize(creds)
+    worksheet = gc.open_by_key(SHEET_ID).worksheet(SHEET_NAME)
+    data = worksheet.get_all_records()
+    df = pd.DataFrame(data)
+    df["회차"] = pd.to_numeric(df["회차"], errors="coerce")
+    df = df.dropna(subset=["회차"])
+    df["회차"] = df["회차"].astype(int)
+    return df
+
+def calculate_scores(df):
+    recent_days = 5
+    today = datetime.today().date()
+    df["날짜"] = pd.to_datetime(df["날짜"]).dt.date
+    df = df[df["날짜"] >= today - timedelta(days=recent_days)]
+
+    combos = df["결과"].tolist()
+    total_lines = len(combos)
+
+    counter = Counter(combos)
+
+    # 패턴 기반 흐름 가중치 예시 적용 (마지막 5줄 기준)
+    flow_bonus = {}
+    if total_lines >= 5:
+        recent = combos[-5:]
+        patterns = ["→".join([c.split("T")[0].replace("LEF", "L").replace("RIGH", "R") for c in recent])]
+        if "L→R→L" in patterns[0]: flow_bonus["RIGHT4EVEN"] = 2
+        if "R→R→R" in patterns[0]: flow_bonus["RIGHT3ODD"] = 2
+
+    result_scores = {}
+    for combo in counter:
+        base_score = counter[combo]
+        bonus = flow_bonus.get(combo, 0)
+        rand_factor = random.uniform(0.95, 1.1)  # 랜덤 5~10% 다양성 부여
+        result_scores[combo] = (base_score + bonus) * rand_factor
+
+    sorted_result = sorted(result_scores.items(), key=lambda x: x[1], reverse=True)
+    top_3 = sorted_result[:3]
+    return top_3, total_lines, df["회차"].max()
+
+@app.route("/predict", methods=["GET"])
 def predict():
-    # 인증
-    json_data = json.loads(os.environ['SERVICE_ACCOUNT_JSON'])
-    scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
-    creds = ServiceAccountCredentials.from_json_keyfile_dict(json_data, scope)
-    client = gspread.authorize(creds)
+    df = load_data()
+    top_3, total_lines, latest_round = calculate_scores(df)
 
-    # 구글 시트 불러오기
-    sheet = client.open("실시간결과").worksheet("예측결과")
-    data = sheet.get_all_values()
+    rank_labels = ["1위", "2위", "3위"]
+    response = f"✅ 최근 5일 기준 예측 결과 (예측 대상: {latest_round}회차)<br>"
+    for i, (combo, _) in enumerate(top_3):
+        label = ""
+        if "LEFT3ODD" in combo: label = "좌삼홀"
+        elif "LEFT3EVEN" in combo: label = "좌삼짝"
+        elif "LEFT4ODD" in combo: label = "좌사홀"
+        elif "LEFT4EVEN" in combo: label = "좌사짝"
+        elif "RIGHT3ODD" in combo: label = "우삼홀"
+        elif "RIGHT3EVEN" in combo: label = "우삼짝"
+        elif "RIGHT4ODD" in combo: label = "우사홀"
+        elif "RIGHT4EVEN" in combo: label = "우사짝"
+        response += f"{rank_labels[i]}: {label} ({combo})<br>"
 
-    # 데이터프레임 구성
-    df = pd.DataFrame(data[1:], columns=data[0])
-    df = df[df['날짜'] != '']
-    df['날짜'] = pd.to_datetime(df['날짜'])
-    df['회차'] = df['회차'].astype(int)
-    df = df.sort_values(by=['날짜', '회차'])
-
-    # 회차 추정
-    latest_date = df['날짜'].max().date()
-    today_df = df[df['날짜'].dt.date == latest_date]
-    latest_round = today_df['회차'].max()
-    target_round = latest_round + 1 if latest_round < 288 else 1
-    base_date = latest_date if latest_round < 288 else latest_date + datetime.timedelta(days=1)
-
-    # 최근 5일 데이터
-    start_date = base_date - datetime.timedelta(days=5)
-    recent_df = df[df['날짜'].dt.date >= start_date]
-    recent_df['조합'] = recent_df[['좌우', '줄수', '홀짝']].agg(''.join, axis=1)
-
-    # 네 가지 조합만 허용
-    valid_combos = {
-        'LEFT3EVEN': '좌삼짝',
-        'RIGHT3ODD': '우삼홀',
-        'LEFT4ODD': '좌사홀',
-        'RIGHT4EVEN': '우사짝'
-    }
-
-    # 빈도, 속성 분해
-    combo_list = recent_df['조합'].tolist()
-    counter = Counter(combo_list)
-    right_left = Counter(recent_df['좌우'])
-    line_num = Counter(recent_df['줄수'])
-    odd_even = Counter(recent_df['홀짝'])
-
-    # 최근 50줄 분석
-    sliding_df = recent_df.tail(50)
-    sliding_combos = sliding_df['조합'].tolist()
-    sliding_counter = Counter(sliding_combos)
-    sliding_top = [x[0] for x in sliding_counter.most_common()]
-
-    # 반복 감지
-    pattern_sequence = ''.join(sliding_df['좌우'].tolist())
-    reversed_seq = pattern_sequence[::-1]
-    repeated = []
-    for i in range(3, 8):
-        if reversed_seq[:i] == reversed_seq[i:2*i]:
-            repeated.append(reversed_seq[:i])
-
-    # 흐름 전환 분석
-    def extract_post_turn_combos(seq):
-        post_combos = []
-        for i in range(1, len(seq)):
-            if seq[i] != seq[i-1]:
-                post_combos.append(seq[i])
-        return Counter(post_combos)
-
-    turn_counter = extract_post_turn_combos(combo_list)
-    reverse_sequence = combo_list[::-1]
-    reverse_patterns = [tuple(reverse_sequence[i:i+3]) for i in range(len(reverse_sequence)-2)]
-
-    # 점수 계산 (네 가지 조합만)
-    combo_score = {}
-    for c in valid_combos:
-        lr = c[:5]
-        ln = c[5]
-        oe = c[6:]
-        score = (
-            right_left[lr] +
-            line_num[ln] +
-            odd_even[oe] +
-            (5 if c in sliding_top else 0) +
-            (5 if any(r in c for r in repeated) else 0) +
-            (7 if c not in counter else 0) +
-            (3 if c in turn_counter else 0)
-        )
-        combo_score[c] = score
-
-    # 상위 3개 (중복 제거된)
-    sorted_combos = sorted(combo_score.items(), key=lambda x: x[1], reverse=True)
-    top3 = []
-    for c, _ in sorted_combos:
-        if c not in top3 and len(top3) < 3:
-            top3.append(c)
-
-    # HTML 출력
-    html = f"""
-    ✅ 최근 5일 기준 예측 결과 (예측 대상: {target_round}회차)<br>
-    1위: {valid_combos[top3[0]]} ({top3[0]})<br>
-    2위: {valid_combos[top3[1]]} ({top3[1]})<br>
-    3위: {valid_combos[top3[2]]} ({top3[2]})<br>
-    (최근 {len(recent_df)}줄 분석됨)<br><br>
-    🧠 흐름 기반 고급 분석 포함<br>
-    - 전환점 이후 조합 반영<br>
-    - 역방향 흐름 감지<br>
-    - 반복 패턴 포함 여부<br>
-    """
-    return html
+    response += f"(최근 {total_lines}줄 분석됨)"
+    return response
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run()
+'''
+
+# Save to app.py
+path = Path("/mnt/data/app.py")
+path.write_text(upgraded_code)
+
+# Output path to confirm
+path.name
