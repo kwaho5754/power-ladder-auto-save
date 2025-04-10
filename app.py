@@ -1,111 +1,83 @@
 from flask import Flask
 import pandas as pd
-import numpy as np
-import os
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
 from datetime import datetime, timedelta
-from google.oauth2 import service_account
-from googleapiclient.discovery import build
-import random
+from collections import Counter
 
 app = Flask(__name__)
 
-# 환경 변수에서 서비스 계정 정보 불러오기
-SERVICE_ACCOUNT_JSON = os.environ.get('SERVICE_ACCOUNT_JSON')
-SPREADSHEET_ID = '1HXRIbAOEotWONqG3FVT9iub9oWNANs7orkUKjmpqfn4'
-SHEET_NAME = '예측결과'
+# 환경변수 기반 서비스 계정 불러오기
+import os
+import json
 
-# 구글 시트 데이터 가져오기
-def load_data():
-    credentials = service_account.Credentials.from_service_account_info(
-        eval(SERVICE_ACCOUNT_JSON),
-        scopes=['https://www.googleapis.com/auth/spreadsheets.readonly']
-    )
-    service = build('sheets', 'v4', credentials=credentials)
-    sheet = service.spreadsheets()
-    result = sheet.values().get(spreadsheetId=SPREADSHEET_ID, range=SHEET_NAME).execute()
-    values = result.get('values', [])
-    df = pd.DataFrame(values[1:], columns=values[0])
-    return df
+SERVICE_ACCOUNT_JSON = os.environ.get("SERVICE_ACCOUNT_JSON")
+filename = "service_account.json"
+with open(filename, "w") as f:
+    f.write(SERVICE_ACCOUNT_JSON)
 
-# 통합 예측 로직
-def predict(df):
-    # 날짜 처리
-    df = df[df['날짜'].str.len() > 0]  # 빈 값 제거
-    df['회차'] = df['회차'].astype(int)
-    df['날짜'] = pd.to_datetime(df['날짜'])
-    today = pd.to_datetime(datetime.now().date())
-    last_date = df['날짜'].max()
-    if last_date < today:
-        predict_round = 1
-    else:
-        predict_round = df[df['날짜'] == last_date]['회차'].max() + 1
+# 구글 시트 인증
+scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+creds = ServiceAccountCredentials.from_json_keyfile_name(filename, scope)
+client = gspread.authorize(creds)
 
-    # 최근 5일 데이터만 분석
-    recent_df = df[df['날짜'] >= today - pd.Timedelta(days=5)]
+sheet = client.open("실시간결과").worksheet("예측결과")
+data = sheet.get_all_records()
+df = pd.DataFrame(data)
 
-    # 분석할 조합열 생성
-    recent_df['조합'] = recent_df['좌/우'] + recent_df['줄수'] + recent_df['홀/짝']
+# ✅ 시트 열 이름에 맞게 컬럼 변경
+df = df.rename(columns={
+    "좌우": "좌/우",
+    "줄수": "3/4",
+    "홀짝": "홀/짝"
+})
 
-    # 최근 흐름 슬라이딩 분석 (ex: 최근 50줄 기준)
-    sliding_df = recent_df.tail(50)
-    sliding_counts = sliding_df['조합'].value_counts(normalize=True)
+# ✅ 최근 5일치 데이터만 필터링
+df["날짜"] = pd.to_datetime(df["날짜"])
+recent_date = df["날짜"].max()
+df_recent = df[df["날짜"] >= recent_date - pd.Timedelta(days=5)].copy()
 
-    # 전체 빈도 + 슬라이딩 + 최근 등장 안한 조합 보정
-    full_counts = recent_df['조합'].value_counts(normalize=True)
-    combined_score = full_counts.copy()
+# ✅ 문자열 조합으로 묶기 (예: LEFT3ODD)
+df_recent["조합"] = df_recent["좌/우"] + df_recent["3/4"].astype(str) + df_recent["홀/짝"]
 
-    for comb in full_counts.index:
-        combined_score[comb] += sliding_counts.get(comb, 0) * 0.5
+# ✅ 빈도 기반 상위 3개 조합 (랜덤성 부여 + 다양화)
+freq = Counter(df_recent["조합"])
+top3 = freq.most_common(10)
 
-    # 희소 조합에 보정 점수 부여
-    rare_bonus = 0.05
-    low_freq = full_counts[full_counts < 0.01].index
-    for comb in low_freq:
-        combined_score[comb] += rare_bonus
+# ✅ 점수 기반 분석 + 랜덤 요소
+import random
+scored = []
+for comb, count in top3:
+    score = count + random.uniform(0.0, 1.5)  # ✅ 변동성 부여
+    scored.append((comb, score))
 
-    # 대칭 흐름 고려 (뒤집은 흐름 등장 시 가산점)
-    last10 = recent_df['조합'].tail(10).tolist()
-    reversed_pattern = last10[::-1]
-    for idx, comb in enumerate(combined_score.index):
-        if comb in reversed_pattern:
-            combined_score[comb] += 0.03  # 작은 가산점
+# 점수 높은 순으로 정렬
+scored.sort(key=lambda x: x[1], reverse=True)
 
-    # 예측 민감도 향상: 5~10% 랜덤 점수 부여
-    for comb in combined_score.index:
-        combined_score[comb] += random.uniform(0.05, 0.1)
+# ✅ 결과 상위 3개
+top3_result = scored[:3]
 
-    # 점수 상위 3개 추출
-    top3 = combined_score.sort_values(ascending=False).head(3).index.tolist()
+# ✅ 한글 표시로 변환
+def decode_label(label):
+    left_right = "좌삼짝" if label.startswith("LEFT3") else \
+                 "좌사홀" if label.startswith("LEFT4") else \
+                 "우삼홀" if label.startswith("RIGHT3") else \
+                 "우사짝"
+    return f"{left_right} ({label})"
 
-    # 매핑
-    name_map = {
-        'LEFT3EVEN': '좌삼짝',
-        'RIGHT3ODD': '우삼홀',
-        'LEFT4ODD': '좌사홀',
-        'RIGHT4EVEN': '우사짝',
-    }
+# ✅ 현재 회차 기준 예측 대상
+latest_round = df["회차"].max() + 1
 
-    result = []
-    for idx, comb in enumerate(top3):
-        label = name_map.get(comb, comb)
-        result.append(f"{idx+1}위: {label} ({comb})")
-
-    줄수 = len(recent_df)
-    return predict_round, result, 줄수
-
-# 웹페이지로 결과 표시
-@app.route('/predict')
-def predict_route():
+@app.route("/predict")
+def predict():
     try:
-        df = load_data()
-        predict_round, result, 줄수 = predict(df)
-        return f"""
-        ✅ 최근 5일 기준 예측 결과 (예측 대상: {predict_round}회차)<br>
-        {'<br>'.join(result)}<br>
-        (최근 {줄수}줄 분석됨)
-        """
+        res = f"✅ 최근 5일 기준 예측 결과 (예측 대상: {latest_round}회차)<br>"
+        for i, (label, score) in enumerate(top3_result, 1):
+            res += f"{i}위: {decode_label(label)}<br>"
+        res += f"(최근 {len(df_recent)}줄 분석됨)"
+        return res
     except Exception as e:
         return f"❌ 오류 발생: {e}"
 
-if __name__ == '__main__':
-    app.run()
+if __name__ == "__main__":
+    app.run(debug=True)
