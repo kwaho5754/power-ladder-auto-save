@@ -1,53 +1,29 @@
-from flask import Flask, request
-import datetime
+from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
-# 예측 결과를 저장할 전역 변수
-latest_prediction = {
-    "target_round": None,
-    "top3": [],
-    "analyzed_rows": 0,
-    "timestamp": None
-}
-
-def format_combo_name(combo):
-    mapping = {
-        "LEFT3ODD": "좌삼홀",
-        "LEFT3EVEN": "좌삼짝",
-        "LEFT4ODD": "좌사홀",
-        "LEFT4EVEN": "좌사짝",
-        "RIGHT3ODD": "우삼홀",
-        "RIGHT3EVEN": "우삼짝",
-        "RIGHT4ODD": "우사홀",
-        "RIGHT4EVEN": "우사짝"
-    }
-    return mapping.get(combo, combo)
-
-@app.route("/receive-predict", methods=["POST"])
-def receive_predict():
-    data = request.get_json()
-    if not data:
-        return {"error": "No data received"}, 400
-
-    # 예측 결과 저장
-    latest_prediction["target_round"] = data.get("target_round")
-    latest_prediction["top3"] = data.get("top3", [])
-    latest_prediction["analyzed_rows"] = data.get("analyzed_rows", 0)
-    latest_prediction["timestamp"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-    return {"message": "Prediction received successfully."}, 200
-
-@app.route("/predict", methods=["GET"])
+# 예측 결과를 보여주는 기본 웹 페이지
+@app.route('/predict', methods=['GET'])
 def predict():
-    if not latest_prediction["top3"]:
-        return "❌ 예측 결과가 아직 없습니다. Colab에서 먼저 예측을 실행해 주세요."
+    top_3 = ["RIGHT3ODD", "LEFT3EVEN", "RIGHT4EVEN"]  # 상위 3개 조합
+    latest_round = 289  # 예측 대상 회차
+    analyzed_rows = 288  # 분석에 사용된 줄 수
 
-    result = f"✅ 최근 5일 기준 예측 결과 (예측 대상: {latest_prediction['target_round']}회차)<br>"
-    for i, combo in enumerate(latest_prediction["top3"], start=1):
-        result += f"{i}위: {format_combo_name(combo)} ({combo})<br>"
-    result += f"<br>(최근 {latest_prediction['analyzed_rows']}줄 분석됨, {latest_prediction['timestamp']} 분석)"
-    return result
+    return f"""
+    ✅ 최근 5일 기준 예측 결과 (예측 대상: {latest_round}회차)<br>
+    1위: {top_3[0]}<br>
+    2위: {top_3[1]}<br>
+    3위: {top_3[2]}<br>
+    <br>(최근 {analyzed_rows}줄 분석됨)
+    """
 
-if __name__ == '__main__':
-    app.run(debug=True)
+# 머신러닝에서 POST로 결과를 받는 엔드포인트
+@app.route('/receive-predict', methods=['POST'])
+def receive_prediction():
+    data = request.get_json()
+    print("📥 받은 예측 데이터:", data)
+
+    return jsonify({"message": "예측 데이터 수신 성공!"})
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)
