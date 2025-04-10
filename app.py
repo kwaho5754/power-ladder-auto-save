@@ -1,29 +1,15 @@
-from flask import Flask, jsonify
-import pandas as pd
-import os
-import gspread
-from oauth2client.service_account import ServiceAccountCredentials
-from datetime import datetime
+from flask import Flask, request
+import datetime
 
 app = Flask(__name__)
 
-
-def load_sheet_data():
-    scope = [
-        'https://spreadsheets.google.com/feeds',
-        'https://www.googleapis.com/auth/spreadsheets',
-        'https://www.googleapis.com/auth/drive.file',
-        'https://www.googleapis.com/auth/drive'
-    ]
-    json_content = os.environ.get("SERVICE_ACCOUNT_JSON")
-    with open("temp_service_account.json", "w") as f:
-        f.write(json_content)
-    creds = ServiceAccountCredentials.from_json_keyfile_name("temp_service_account.json", scope)
-    client = gspread.authorize(creds)
-    sheet = client.open("실시간결과").worksheet("예측결과")
-    data = sheet.get_all_records()
-    return pd.DataFrame(data)
-
+# 예측 결과를 저장할 전역 변수
+latest_prediction = {
+    "target_round": None,
+    "top3": [],
+    "analyzed_rows": 0,
+    "timestamp": None
+}
 
 def format_combo_name(combo):
     mapping = {
@@ -34,55 +20,34 @@ def format_combo_name(combo):
         "RIGHT3ODD": "우삼홀",
         "RIGHT3EVEN": "우삼짝",
         "RIGHT4ODD": "우사홀",
-        "RIGHT4EVEN": "우사짝",
+        "RIGHT4EVEN": "우사짝"
     }
     return mapping.get(combo, combo)
 
+@app.route("/receive-predict", methods=["POST"])
+def receive_predict():
+    data = request.get_json()
+    if not data:
+        return {"error": "No data received"}, 400
 
-def determine_next_round(latest_date, latest_round):
-    today = datetime.now().strftime('%Y-%m-%d')
-    if latest_date < today:
-        return today, 1
-    else:
-        return today, int(latest_round) + 1
+    # 예측 결과 저장
+    latest_prediction["target_round"] = data.get("target_round")
+    latest_prediction["top3"] = data.get("top3", [])
+    latest_prediction["analyzed_rows"] = data.get("analyzed_rows", 0)
+    latest_prediction["timestamp"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
+    return {"message": "Prediction received successfully."}, 200
 
 @app.route("/predict", methods=["GET"])
 def predict():
-    try:
-        df = load_sheet_data()
-        df = df[df['날짜'] != '']
+    if not latest_prediction["top3"]:
+        return "❌ 예측 결과가 아직 없습니다. Colab에서 먼저 예측을 실행해 주세요."
 
-        # 최근 5일 데이터만 필터링
-        df['날짜'] = pd.to_datetime(df['날짜'])
-        cutoff = df['날짜'].max() - pd.Timedelta(days=4)
-        df_recent = df[df['날짜'] >= cutoff]
-
-        # 조합 생성
-        df_recent['조합'] = df_recent['좌우'] + df_recent['줄수'].astype(str) + df_recent['홀짝']
-
-        # 최근 288줄 기준
-        combos = df_recent['조합'].tail(288)
-        counts = combos.value_counts()
-
-        # 순위별 예측 결과
-        top_3 = counts.head(3).index.tolist()
-        top_3_kor = [format_combo_name(c) for c in top_3]
-
-        # 예측 대상 회차 계산
-        latest_date = df['날짜'].max().strftime('%Y-%m-%d')
-        latest_round = df[df['날짜'] == latest_date]['회차'].max()
-        next_date, next_round = determine_next_round(latest_date, latest_round)
-
-        return f"✅ 최근 5일 기준 예측 결과 (예측 대상: {next_round}회차)<br>" + \
-               f"1위: {top_3_kor[0]} ({top_3[0]})<br>" + \
-               f"2위: {top_3_kor[1]} ({top_3[1]})<br>" + \
-               f"3위: {top_3_kor[2]} ({top_3[2]})<br><br>" + \
-               f"(최근 {len(combos)}줄 분석됨)"
-
-    except Exception as e:
-        return f"❌ 오류 발생: {str(e)}"
-
+    result = f"✅ 최근 5일 기준 예측 결과 (예측 대상: {latest_prediction['target_round']}회차)<br>"
+    for i, combo in enumerate(latest_prediction["top3"], start=1):
+        result += f"{i}위: {format_combo_name(combo)} ({combo})<br>"
+    result += f"<br>(최근 {latest_prediction['analyzed_rows']}줄 분석됨, {latest_prediction['timestamp']} 분석)"
+    return result
 
 if __name__ == '__main__':
     app.run(debug=True)
