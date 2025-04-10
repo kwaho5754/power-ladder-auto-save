@@ -1,29 +1,48 @@
-from flask import Flask, request, jsonify
+from flask import Flask, jsonify
+import pandas as pd
+from datetime import datetime
 
 app = Flask(__name__)
 
-# 예측 결과를 보여주는 기본 웹 페이지
-@app.route('/predict', methods=['GET'])
+@app.route("/predict", methods=["GET"])
 def predict():
-    top_3 = ["RIGHT3ODD", "LEFT3EVEN", "RIGHT4EVEN"]  # 상위 3개 조합
-    latest_round = 289  # 예측 대상 회차
-    analyzed_rows = 288  # 분석에 사용된 줄 수
+    # ▶️ Google Sheets에서 불러온 데이터
+    sheet_url = "https://docs.google.com/spreadsheets/d/1HXRIbAOEotWONqG3FVT9iub9oWNANs7orkUKjmpqfn4/export?format=csv&gid=0"
+    df = pd.read_csv(sheet_url)
 
-    return f"""
-    ✅ 최근 5일 기준 예측 결과 (예측 대상: {latest_round}회차)<br>
-    1위: {top_3[0]}<br>
-    2위: {top_3[1]}<br>
-    3위: {top_3[2]}<br>
-    <br>(최근 {analyzed_rows}줄 분석됨)
-    """
+    # ▶️ 최근 날짜 기준으로 5일치 데이터 필터링
+    df["날짜"] = pd.to_datetime(df["날짜"])
+    recent_date = df["날짜"].max()
+    five_days_ago = recent_date - pd.Timedelta(days=5)
+    df_filtered = df[df["날짜"] >= five_days_ago]
 
-# 머신러닝에서 POST로 결과를 받는 엔드포인트
-@app.route('/receive-predict', methods=['POST'])
-def receive_prediction():
-    data = request.get_json()
-    print("📥 받은 예측 데이터:", data)
+    # ▶️ 조합 컬럼 생성 (예: RIGHT3ODD)
+    df_filtered["조합"] = (
+        df_filtered["좌우"] + df_filtered["줄수"].astype(str) + df_filtered["홀짝"]
+    )
 
-    return jsonify({"message": "예측 데이터 수신 성공!"})
+    # ▶️ 조합별 빈도수 집계
+    combo_counts = df_filtered["조합"].value_counts()
 
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    # ▶️ 가장 많이 나온 상위 3개 조합 추출
+    top3 = combo_counts.head(3).index.tolist()
+
+    # ✅ 최신 회차 계산 (자정 지나면 1회차로 초기화)
+    today = datetime.now().strftime("%Y-%m-%d")
+    last_date = df["날짜"].iloc[-1].strftime("%Y-%m-%d")
+    last_round = int(df["회차"].iloc[-1])
+
+    if last_date != today:
+        latest_round = 1
+    else:
+        latest_round = last_round + 1
+
+    # ▶️ 결과 반환
+    result = {
+        "✅ 최근 5일 기준 예측 결과": f"(예측 대상: {latest_round}회차)",
+        "1위": top3[0],
+        "2위": top3[1] if len(top3) > 1 else None,
+        "3위": top3[2] if len(top3) > 2 else None,
+        "📊 분석 줄 수": len(df_filtered),
+    }
+    return jsonify(result)
