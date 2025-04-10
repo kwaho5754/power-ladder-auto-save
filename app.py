@@ -1,48 +1,61 @@
 from flask import Flask, jsonify
 import pandas as pd
+import requests
 from datetime import datetime
+from collections import Counter
 
 app = Flask(__name__)
 
+# 🧠 조합 이름 변환
+def format_combo_name(combo):
+    mapping = {
+        "LEFT3ODD": "좌삼홀", "LEFT3EVEN": "좌삼짝",
+        "LEFT4ODD": "좌사홀", "LEFT4EVEN": "좌사짝",
+        "RIGHT3ODD": "우삼홀", "RIGHT3EVEN": "우삼짝",
+        "RIGHT4ODD": "우사홀", "RIGHT4EVEN": "우사짝"
+    }
+    return mapping.get(combo, combo)
+
+# 🔮 예측 함수
+def predict_top3_combinations(data):
+    count = Counter(data)
+    top3 = [item[0] for item in count.most_common(3)]
+    return top3
+
 @app.route("/predict", methods=["GET"])
 def predict():
-    # ▶️ Google Sheets에서 불러온 데이터
-    sheet_url = "https://docs.google.com/spreadsheets/d/1HXRIbAOEotWONqG3FVT9iub9oWNANs7orkUKjmpqfn4/export?format=csv&gid=0"
+    # 📂 구글 시트에서 CSV 가져오기
+    sheet_url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSdr7sw0pVmKV3LUw5EAAoYo6IbMn_bOJfRP-ED9XCRPRtOPbWALiJ1dnESrxGlsQ/pub?gid=0&single=true&output=csv"
     df = pd.read_csv(sheet_url)
 
-    # ▶️ 최근 날짜 기준으로 5일치 데이터 필터링
-    df["날짜"] = pd.to_datetime(df["날짜"])
-    recent_date = df["날짜"].max()
-    five_days_ago = recent_date - pd.Timedelta(days=5)
-    df_filtered = df[df["날짜"] >= five_days_ago]
+    # 🧹 결측치 제거
+    df.dropna(subset=["결과"], inplace=True)
 
-    # ▶️ 조합 컬럼 생성 (예: RIGHT3ODD)
-    df_filtered["조합"] = (
-        df_filtered["좌우"] + df_filtered["줄수"].astype(str) + df_filtered["홀짝"]
-    )
+    # 📅 최근 5일 데이터만 사용
+    df["날짜"] = pd.to_datetime(df["날짜"], errors='coerce')
+    recent_5days = df[df["날짜"] >= pd.Timestamp.now() - pd.Timedelta(days=5)]
 
-    # ▶️ 조합별 빈도수 집계
-    combo_counts = df_filtered["조합"].value_counts()
+    # 📦 조합 추출
+    combos = recent_5days["결과"].tolist()
 
-    # ▶️ 가장 많이 나온 상위 3개 조합 추출
-    top3 = combo_counts.head(3).index.tolist()
+    # 🔢 최근 288줄 기준 필터링 (하루 기준)
+    filtered_combos = combos[-288:]
 
-    # ✅ 최신 회차 계산 (자정 지나면 1회차로 초기화)
-    today = datetime.now().strftime("%Y-%m-%d")
-    last_date = df["날짜"].iloc[-1].strftime("%Y-%m-%d")
-    last_round = int(df["회차"].iloc[-1])
+    # 🔮 예측
+    top3 = predict_top3_combinations(filtered_combos)
 
-    if last_date != today:
-        latest_round = 1
-    else:
-        latest_round = last_round + 1
+    # 📆 현재 날짜 기준 오늘 회차 계산
+    today = datetime.now().date()
+    today_rows = recent_5days[recent_5days["날짜"].dt.date == today]
+    current_round = len(today_rows) + 1  # 다음 회차
 
-    # ▶️ 결과 반환
-    result = {
-        "✅ 최근 5일 기준 예측 결과": f"(예측 대상: {latest_round}회차)",
+    return jsonify({
         "1위": top3[0],
-        "2위": top3[1] if len(top3) > 1 else None,
-        "3위": top3[2] if len(top3) > 2 else None,
-        "📊 분석 줄 수": len(df_filtered),
-    }
-    return jsonify(result)
+        "2위": top3[1],
+        "3위": top3[2],
+        "예측 대상": f"{current_round}회차",
+        "분석된 줄 수": len(filtered_combos)
+    })
+
+if __name__ == "__main__":
+    app.run()
