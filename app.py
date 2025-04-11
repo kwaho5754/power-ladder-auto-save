@@ -1,6 +1,7 @@
 from flask import Flask, jsonify, Response
 import pandas as pd
 import os
+import json
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from datetime import datetime
@@ -8,11 +9,14 @@ from collections import Counter
 
 app = Flask(__name__)
 
-# 구글 시트 설정
+# 📌 환경변수에서 JSON 추출하여 파일로 저장
+SERVICE_ACCOUNT_JSON = os.getenv("SERVICE_ACCOUNT_JSON")
+with open("service_account.json", "w") as f:
+    f.write(SERVICE_ACCOUNT_JSON)
+
+# 🔐 구글 시트 인증 및 불러오기
 SPREADSHEET_ID = "1HXRIbAOEotWONqG3FVT9iub9oWNANs7orkUKjmpqfn4"
 SHEET_NAME = "예측결과"
-SERVICE_ACCOUNT_JSON = os.getenv("SERVICE_ACCOUNT_JSON")
-
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 credentials = ServiceAccountCredentials.from_json_keyfile_name("service_account.json", scope)
 client = gspread.authorize(credentials)
