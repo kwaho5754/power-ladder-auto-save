@@ -1,66 +1,90 @@
-from flask import Flask, jsonify, Response
-import pandas as pd
-import os
-import json
+from flask import Flask, jsonify
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
-from datetime import datetime
+import pandas as pd
+from sklearn.tree import DecisionTreeClassifier
+from flask_cors import CORS
+import os
+import json
 from collections import Counter
 
 app = Flask(__name__)
+CORS(app)
 
-# 📌 환경변수에서 JSON 추출하여 파일로 저장
-SERVICE_ACCOUNT_JSON = os.getenv("SERVICE_ACCOUNT_JSON")
+# 서비스 계정 JSON 설정
+SERVICE_ACCOUNT_JSON = os.getenv('SERVICE_ACCOUNT_JSON')
 with open("service_account.json", "w") as f:
     f.write(SERVICE_ACCOUNT_JSON)
 
-# 🔐 구글 시트 인증 및 불러오기
-SPREADSHEET_ID = "1HXRIbAOEotWONqG3FVT9iub9oWNANs7orkUKjmpqfn4"
-SHEET_NAME = "예측결과"
+# 구글 시트 인증
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 credentials = ServiceAccountCredentials.from_json_keyfile_name("service_account.json", scope)
 client = gspread.authorize(credentials)
 
-def load_data():
-    sheet = client.open_by_key(SPREADSHEET_ID).worksheet(SHEET_NAME)
-    data = sheet.get_all_records()
+# 시트 연결
+sheet = client.open_by_key("1HXRIbAOEotWONqG3FVT9iub9oWNANs7orkUKjmpqfn4")
+worksheet = sheet.worksheet("실시간결과")
+
+def make_combo(row):
+    return f"{row['좌우']}{row['줄수']}{row['홀짝']}"
+
+# 고급 통계 기반 예측
+def analyze_and_predict():
+    data = worksheet.get_all_records()
     df = pd.DataFrame(data)
-    df = df[df["회차"].astype(str).str.isnumeric()]
-    df["회차"] = df["회차"].astype(int)
-    df["날짜"] = pd.to_datetime(df["날짜"])
-    return df
 
-def get_latest_round(df):
-    now = datetime.now()
-    today = now.date()
-    recent = df[df["날짜"].dt.date == today]
-    if recent.empty:
-        return 1
-    latest_round = recent["회차"].max()
-    return latest_round + 1 if latest_round < 288 else 1
+    if len(df) < 10:
+        return {"message": "데이터가 부족합니다."}
 
-def analyze_top3_combinations(df):
-    df["조합"] = df["좌우"] + df["줄수"].astype(str) + df["홀짝"]
-    recent_df = df.tail(288)
-    counts = Counter(recent_df["조합"])
-    top3 = [item[0] for item in counts.most_common(3)]
-    return top3, len(recent_df)
+    df["조합"] = df.apply(make_combo, axis=1)
+    df = df[-288:]  # 최근 288줄 (하루 기준)
 
-@app.route("/predict")
+    # 빈도수 기반 조합 분석
+    counter = Counter(df["조합"])
+    most_common = counter.most_common()
+
+    top3 = [combo for combo, _ in most_common[:3]]
+    return {
+        "최근_조합_빈도": dict(most_common[:10]),
+        "1위": top3[0] if len(top3) > 0 else "",
+        "2위": top3[1] if len(top3) > 1 else "",
+        "3위": top3[2] if len(top3) > 2 else ""
+    }
+
+# 머신러닝 기반 예측
+def predict_with_ml():
+    data = worksheet.get_all_records()
+    df = pd.DataFrame(data)
+
+    if len(df) < 21:
+        return "데이터 부족"
+
+    df["조합"] = df.apply(make_combo, axis=1)
+    df["target"] = df["조합"].shift(-1)
+    df = df.dropna()
+
+    df = df[-21:]  # 최근 20줄 + 타겟
+
+    X = df[["좌우", "줄수", "홀짝"]]
+    y = df["target"]
+
+    X = pd.get_dummies(X)
+    model = DecisionTreeClassifier()
+    model.fit(X, y)
+
+    latest = df[["좌우", "줄수", "홀짝"]].iloc[-1:]
+    latest = pd.get_dummies(latest)
+    latest = latest.reindex(columns=X.columns, fill_value=0)
+
+    pred = model.predict(latest)[0]
+    return pred
+
+@app.route("/predict", methods=["GET"])
 def predict():
-    df = load_data()
-    latest_round = get_latest_round(df)
-    top3, used_rows = analyze_top3_combinations(df)
-
-    html = f"""
-    <h3>✅ 최근 5일 기준 예측 결과 (예측 대상: {latest_round}회차)</h3>
-    <p>1위: {top3[0]}</p>
-    <p>2위: {top3[1]}</p>
-    <p>3위: {top3[2]}</p>
-    <br>
-    <small>(최근 {used_rows}줄 분석됨)</small>
-    """
-    return Response(html, mimetype='text/html')
+    result = analyze_and_predict()
+    ml_result = predict_with_ml()
+    result["머신러닝_예측결과"] = ml_result
+    return jsonify(result)
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=10000)
+    app.run(debug=True)
